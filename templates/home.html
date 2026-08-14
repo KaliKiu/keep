@@ -219,9 +219,10 @@
 
         <!-- TAB 5: PARTNER SETTINGS -->
         {{ if eq .Tab "settings" }}
-            <div style="background: #100f0d; padding: 20px; border-radius: 16px; border: 1px solid #e76262;">
-                <p style="font-size: 12px; color: var(--text-muted); text-align: center;">Your Friend Code</p>
-                <div class="code-reveal" style="font-size: 24px; letter-spacing: 4px; color: var(--accent);">
+            {{ if eq .Tab "settings" }}
+            <div style="background: #181715; padding: 20px; border-radius: 16px; border: 1px solid #33312c; text-align: center; margin-bottom: 20px;">
+                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.2px;">Your Friend Code</p>
+                <div style="font-size: 24px; letter-spacing: 4px; color: var(--accent-yellow); font-family: monospace; font-weight: bold;">
                     {{ .User.FriendCode }}
                 </div>
             </div>
