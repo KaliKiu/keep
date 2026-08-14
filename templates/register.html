@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>keep. — register</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="card">
+        <h2>keep. 🌻</h2>
+        <p class="subtitle">create your space.</p>
+        
+        {{ if .Error }}
+            <div class="error">{{ .Error }}</div>
+        {{ end }}
+
+        <form method="POST" action="/register">
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" name="username" required autocomplete="username">
+            </div>
+            
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" name="password" required autocomplete="new-password">
+            </div>
+
+            <div class="input-group">
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password" required autocomplete="new-password">
+            </div>
+            
+            <button type="submit">Create Account</button>
+        </form>
+
+        <a href="/login" class="link-btn">Already have an account? Sign in</a>
+        <div class="footer">keep. v0.1</div>
+    </div>
+</body>
+</html>

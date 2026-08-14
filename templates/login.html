@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>keep. — enter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="card">
+        <h2>keep. 🌻</h2>
+        <p class="subtitle">some things need time.</p>
+        
+        {{ if .Error }}
+            <div class="error">{{ .Error }}</div>
+        {{ end }}
+
+        <form method="POST" action="/login">
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" name="username" required autocomplete="username">
+            </div>
+            
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" name="password" required autocomplete="current-password">
+            </div>
+            
+            <button type="submit">Sign In</button>
+        </form>
+
+        <a href="/register" class="link-btn">Don't have an account? Register</a>
+        <div class="footer">keep. v0.1</div>
+    </div>
+</body>
+</html>

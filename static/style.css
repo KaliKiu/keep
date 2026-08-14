@@ -1,0 +1,106 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #faf9f5;
+    color: #2c2c2a;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.card {
+    width: 100%;
+    max-width: 360px;
+    padding: 40px 30px;
+    box-sizing: border-box;
+}
+
+h2 {
+    font-weight: 400;
+    letter-spacing: -0.5px;
+    margin: 0 0 4px 0;
+    font-size: 24px;
+}
+
+.subtitle {
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 30px;
+}
+
+.input-group {
+    margin-bottom: 16px;
+}
+
+label {
+    display: block;
+    font-size: 11px;
+    color: #666;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    box-sizing: border-box;
+    background: transparent;
+    border: 1px solid #d6d3cb;
+    border-radius: 8px;
+    font-size: 15px;
+    color: #2c2c2a;
+}
+
+input:focus {
+    outline: none;
+    border-color: #2c2c2a;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    background: #2c2c2a;
+    color: #faf9f5;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 10px;
+    letter-spacing: 0.5px;
+}
+
+button:active {
+    background: #000;
+}
+
+.link-btn {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #666;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.link-btn:hover {
+    color: #2c2c2a;
+}
+
+.error {
+    color: #b2533e;
+    font-size: 13px;
+    margin-bottom: 20px;
+    background: #fae8e5;
+    padding: 10px 12px;
+    border-radius: 6px;
+}
+
+.footer {
+    text-align: center;
+    color: #ccc;
+    font-size: 11px;
+    margin-top: 40px;
+}
