@@ -23,6 +23,7 @@ type Letter struct {
 	ReceiverID    int
 	Title         string
 	Content       string
+	Emoji         string
 	UnlockType    string
 	UnlockAt      *time.Time
 	SenderReady   bool

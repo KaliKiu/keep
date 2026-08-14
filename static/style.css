@@ -10,7 +10,7 @@
     --danger: #e26d5c;
 }
 
-/* LOCK X-AXIS: Prevents any side-to-side mobile sliding */
+/* --- SILKY GLOBAL PAGE ENTRY --- */
 html, body {
     width: 100%;
     overflow-x: hidden;
@@ -28,6 +28,18 @@ body {
     min-height: 100vh;
     box-sizing: border-box;
     padding: 16px; /* Symmetric outer yellow frame */
+    animation: globalPageEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes globalPageEnter {
+    from { 
+        opacity: 0; 
+        transform: scale(0.98) translateY(6px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: scale(1) translateY(0); 
+    }
 }
 
 /* --- THE CARD BASE --- */
@@ -61,13 +73,13 @@ body {
 
 /* --- TAB TRANSITION MAGIC --- */
 .tab-content {
-    animation: smoothSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: tabSlideGlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     flex-grow: 1; 
     display: flex;
     flex-direction: column;
 }
 
-@keyframes smoothSlideUp {
+@keyframes tabSlideGlide {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
@@ -260,4 +272,9 @@ button:active {
     color: var(--accent-yellow);
     margin: 15px 0;
     box-sizing: border-box;
+}
+
+/* --- MICRO-INTERACTIONS --- */
+a, button, select, input {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }

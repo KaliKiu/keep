@@ -37,13 +37,16 @@
                            style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.6; border-color: var(--border-color);{{ else }}border-color: #3b352e;{{ end }}">
                             
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-weight: 600; font-size: 16px;">
-                                    {{ .Title }} 
-                                    {{ if .IsUnlocked }}<span class="unread-dot"></span>{{ end }}
+                                <span style="font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
+                                    <span>
+                                        {{ .Title }} 
+                                        {{ if .IsUnlocked }}<span class="unread-dot"></span>{{ end }}
+                                    </span>
                                 </span>
                                 <span style="font-size: 18px;">{{ if .IsUnlocked }}💌{{ else }}🔒{{ end }}</span>
                             </div>
-                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
                                 {{ if .IsUnlocked }}
                                     Tap to open and read
                                 {{ else }}
@@ -70,10 +73,13 @@
                         {{ $hasHistoryRx = true }}
                         <a href="/letter/view?id={{ .ID }}" class="letter-card">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-weight: 600; font-size: 16px; color: var(--text-main);">{{ .Title }}</span>
+                                <span style="font-weight: 600; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
+                                    <span>{{ .Title }}</span>
+                                </span>
                                 <span style="font-size: 18px; opacity: 0.6;">📖</span>
                             </div>
-                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
                                 Opened • Sent on {{ .CreatedAt.Format "Jan 02, 2006" }}
                             </div>
                         </a>
@@ -94,12 +100,15 @@
                            class="letter-card" 
                            style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.6;{{ end }}">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-weight: 600; font-size: 16px; color: var(--text-main);">{{ .Title }}</span>
+                                <span style="font-weight: 600; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
+                                    <span>{{ .Title }}</span>
+                                </span>
                                 <span style="font-size: 18px; opacity: 0.6;">
                                     {{ if .IsUnlocked }}{{ if .IsRead }}📖{{ else }}📬{{ end }}{{ else }}🔒{{ end }}
                                 </span>
                             </div>
-                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
                                 {{ if .IsUnlocked }}
                                     {{ if .IsRead }}Partner has read this{{ else }}Delivered (Unread){{ end }}
                                 {{ else }}
@@ -120,6 +129,19 @@
                     <div class="empty-state">You need to link with a partner in the Partner tab before writing letters!</div>
                 {{ else }}
                     <form method="POST" action="/letters/write">
+                        <div class="input-group">
+                            <label>Vibe / Emoji</label>
+                            <select name="emoji">
+                                <option value="💌">💌 Love Letter</option>
+                                <option value="🌻">🌻 Sunflower</option>
+                                <option value="🌙">🌙 Midnight Thought</option>
+                                <option value="☕">☕ Cozy Coffee</option>
+                                <option value="⭐">⭐ Special Moment</option>
+                                <option value="🌧️">🌧️ Rainy Day</option>
+                                <option value="🎧">🎧 Lo-Fi Jam</option>
+                                <option value="🐈">🐈 Cute Cat</option>
+                            </select>
+                        </div>
                         <div class="input-group">
                             <label>Title / Envelope Note</label>
                             <input type="text" name="title" placeholder="e.g. Open when you miss me" required>
@@ -155,7 +177,6 @@
                 </div>
 
                 {{ if not .Partner.HasPartner }}
-                    <!-- State 1: No partner -->
                     <form method="POST" action="/partner/add">
                         <div class="input-group">
                             <label>Link with a partner</label>
@@ -165,7 +186,6 @@
                     </form>
                 {{ else }}
                     {{ if .Partner.IsPending }}
-                        <!-- State 2: Pending Request -->
                         <div style="text-align: center; margin-bottom: 20px; padding: 25px; border: 1px dashed var(--border-color); border-radius: 16px;">
                             {{ if .Partner.IsSender }}
                                 <p style="font-size: 15px; margin: 0 0 10px 0;">Request sent to <b>{{ .Partner.PartnerName }}</b></p>
@@ -181,7 +201,6 @@
                             <button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Cancel Request</button>
                         </form>
                     {{ else }}
-                        <!-- State 3: Fully Linked -->
                         <div style="text-align: center; margin-bottom: 25px; padding: 20px; background: #1f1c19; border-radius: 16px;">
                             <p style="font-size: 15px; margin: 0;">Linked with <b>{{ .Partner.PartnerName }}</b> 🌻</p>
                         </div>
@@ -228,7 +247,7 @@
             osc.start();
             osc.stop(audioCtx.currentTime + 0.08);
         }
-        document.querySelectorAll('input, textarea, button').forEach(el => {
+        document.querySelectorAll('input, textarea, button, select').forEach(el => {
             if(el.id !== 'audio-toggle') el.addEventListener('focus', playClick);
         });
     </script>

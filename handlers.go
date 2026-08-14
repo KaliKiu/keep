@@ -156,8 +156,11 @@ func HandleWriteLetter(w http.ResponseWriter, r *http.Request) {
 			unlockAt = &parsedTime
 		}
 	}
-
-	CreateLetter(user.ID, partnerInfo.PartnerID, title, content, unlockType, unlockAt)
+	emoji := r.FormValue("emoji")
+	if emoji == "" {
+		emoji = "💌"
+	}
+	CreateLetter(user.ID, partnerInfo.PartnerID, title, content, emoji, unlockType, unlockAt)
 	http.Redirect(w, r, "/?tab=history_tx", http.StatusSeeOther)
 }
 
