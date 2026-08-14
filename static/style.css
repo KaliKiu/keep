@@ -132,3 +132,16 @@ button:active {
     font-size: 13px;
     margin-bottom: 15px;
 }
+.code-reveal {
+    background: #181715;
+    border: 1px solid #33312c;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    font-family: monospace;
+    font-size: 20px;
+    letter-spacing: 4px;
+    color: var(--accent-yellow);
+    margin: 20px 0;
+    cursor: pointer;
+}

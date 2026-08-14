@@ -274,32 +274,5 @@
             group.style.display = (type === "date") ? "block" : "none";
         }
     </script>
-    <button id="audio-toggle" style="background: transparent; color: #555; padding: 5px; width: auto; font-size: 10px; margin-bottom: 20px;">
-        🔇 Sound Off
-    </button>
-
-    <script>
-        let audioEnabled = false;
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        document.getElementById('audio-toggle').onclick = function() {
-            audioEnabled = !audioEnabled;
-            this.innerText = audioEnabled ? "🔊 Sound On" : "🔇 Sound Off";
-        };
-        function playClick() {
-            if (!audioEnabled) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
-        }
-        document.querySelectorAll('input, textarea, button').forEach(el => {
-            el.addEventListener('focus', playClick);
-        });
-    </script>
 </body>
 </html>
