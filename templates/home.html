@@ -4,81 +4,6 @@
     <title>keep.</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/static/style.css">
-    <style>
-        .nav-tabs {
-            display: flex;
-            overflow-x: auto;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
-            border-bottom: 1px solid #d6d3cb;
-            margin-bottom: 25px;
-        }
-        .nav-tabs::-webkit-scrollbar {
-            display: none;
-        }
-        .tab-item {
-            text-decoration: none;
-            color: #888;
-            font-size: 14px;
-            font-weight: 500;
-            padding: 10px 15px;
-            transition: color 0.2s;
-        }
-        .tab-item.active {
-            color: #2c2c2a;
-            border-bottom: 2px solid #2c2c2a;
-        }
-        .code-reveal {
-            background: #e8e6df;
-            padding: 10px;
-            border-radius: 6px;
-            text-align: center;
-            font-family: monospace;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-        .letter-card {
-            border: 1px solid #d6d3cb;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            background: #fff;
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: block; 
-            text-decoration: none; 
-            color: inherit;
-        }
-        .letter-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-            transform: translateY(-1px);
-        }
-        .unread-dot {
-            height: 10px;
-            width: 10px;
-            background-color: #4a90e2; 
-            border-radius: 50%;
-            display: inline-block;
-            margin-left: 8px;
-            box-shadow: 0 0 5px rgba(74, 144, 226, 0.4);
-        }
-        textarea {
-            width: 100%;
-            height: 120px;
-            padding: 12px;
-            box-sizing: border-box;
-            border: 1px solid #d6d3cb;
-            border-radius: 8px;
-            font-family: inherit;
-            margin-bottom: 16px;
-        }
-        .empty-state {
-            color: #b3b0a7;
-            font-size: 13px;
-            font-style: italic;
-            text-align: center;
-            padding: 20px 0;
-        }
-    </style>
 </head>
 <body>
     <div class="card">
@@ -98,173 +23,178 @@
             <a href="/?tab=settings" class="tab-item {{ if eq .Tab "settings" }}active{{ end }}">Partner</a>
         </div>
 
-        <!-- TAB 1: INBOX (Unopened / Locked) -->
-        {{ if eq .Tab "inbox" }}
-            {{ $hasInbox := false }}
-            {{ range .Letters }}
-                {{ if and (not .IsSender) (not .IsRead) }}
-                    {{ $hasInbox = true }}
-                    <a {{ if .IsUnlocked }}href="/letter/view?id={{ .ID }}"{{ end }} 
-                       class="letter-card" 
-                       style="{{ if not .IsUnlocked }}background: #faf9f5; border-style: dashed; opacity: 0.8;{{ else }}border-color: #2c2c2a;{{ end }}">
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 600; font-size: 15px;">
-                                {{ .Title }} 
-                                {{ if .IsUnlocked }}<span class="unread-dot"></span>{{ end }}
-                            </span>
-                            <span style="font-size: 16px;">{{ if .IsUnlocked }}💌{{ else }}🔒{{ end }}</span>
-                        </div>
-                        <div style="font-size: 11px; color: #888; margin-top: 6px;">
-                            {{ if .IsUnlocked }}
-                                Tap to open and read
-                            {{ else }}
-                                {{ if eq .UnlockType "date" }}
-                                    Unlocks on: {{ .UnlockAt.Format "Jan 02, 2006 at 15:04" }}
-                                {{ else if eq .UnlockType "mutual_ready" }}
-                                    Waiting for mutual ready
+        <!-- SMOOTH ANIMATION WRAPPER -->
+        <div class="tab-content">
+            
+            <!-- TAB 1: INBOX -->
+            {{ if eq .Tab "inbox" }}
+                {{ $hasInbox := false }}
+                {{ range .Letters }}
+                    {{ if and (not .IsSender) (not .IsRead) }}
+                        {{ $hasInbox = true }}
+                        <a {{ if .IsUnlocked }}href="/letter/view?id={{ .ID }}"{{ end }} 
+                           class="letter-card" 
+                           style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.6; border-color: var(--border-color);{{ else }}border-color: #3b352e;{{ end }}">
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 600; font-size: 16px;">
+                                    {{ .Title }} 
+                                    {{ if .IsUnlocked }}<span class="unread-dot"></span>{{ end }}
+                                </span>
+                                <span style="font-size: 18px;">{{ if .IsUnlocked }}💌{{ else }}🔒{{ end }}</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                                {{ if .IsUnlocked }}
+                                    Tap to open and read
+                                {{ else }}
+                                    {{ if eq .UnlockType "date" }}
+                                        Unlocks on: {{ .UnlockAt.Format "Jan 02, 2006 at 15:04" }}
+                                    {{ else if eq .UnlockType "mutual_ready" }}
+                                        Waiting for mutual ready
+                                    {{ end }}
                                 {{ end }}
-                            {{ end }}
-                        </div>
-                    </a>
+                            </div>
+                        </a>
+                    {{ end }}
+                {{ end }}
+                {{ if not $hasInbox }}
+                    <div class="empty-state">No new letters waiting for you.</div>
                 {{ end }}
             {{ end }}
-            {{ if not $hasInbox }}
-                <div class="empty-state">No new letters waiting for you.</div>
-            {{ end }}
-        {{ end }}
 
-        <!-- TAB 2: HISTORY RECEIVED (Opened) -->
-        {{ if eq .Tab "history_rx" }}
-            {{ $hasHistoryRx := false }}
-            {{ range .Letters }}
-                {{ if and (not .IsSender) .IsRead }}
-                    {{ $hasHistoryRx = true }}
-                    <a href="/letter/view?id={{ .ID }}" class="letter-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 600; font-size: 15px; color: #555;">{{ .Title }}</span>
-                            <span style="font-size: 16px; opacity: 0.7;">📖</span>
-                        </div>
-                        <div style="font-size: 11px; color: #aaa; margin-top: 6px;">
-                            Opened • Sent on {{ .CreatedAt.Format "Jan 02, 2006" }}
-                        </div>
-                    </a>
+            <!-- TAB 2: HISTORY RECEIVED -->
+            {{ if eq .Tab "history_rx" }}
+                {{ $hasHistoryRx := false }}
+                {{ range .Letters }}
+                    {{ if and (not .IsSender) .IsRead }}
+                        {{ $hasHistoryRx = true }}
+                        <a href="/letter/view?id={{ .ID }}" class="letter-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 600; font-size: 16px; color: var(--text-main);">{{ .Title }}</span>
+                                <span style="font-size: 18px; opacity: 0.6;">📖</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                                Opened • Sent on {{ .CreatedAt.Format "Jan 02, 2006" }}
+                            </div>
+                        </a>
+                    {{ end }}
+                {{ end }}
+                {{ if not $hasHistoryRx }}
+                    <div class="empty-state">You haven't opened any letters yet.</div>
                 {{ end }}
             {{ end }}
-            {{ if not $hasHistoryRx }}
-                <div class="empty-state">You haven't opened any letters yet.</div>
-            {{ end }}
-        {{ end }}
 
-        <!-- TAB 3: HISTORY SENT -->
-        {{ if eq .Tab "history_tx" }}
-            {{ $hasHistoryTx := false }}
-            {{ range .Letters }}
-                {{ if .IsSender }}
-                    {{ $hasHistoryTx = true }}
-                    <a {{ if .IsUnlocked }}href="/letter/view?id={{ .ID }}"{{ end }} 
-                       class="letter-card" 
-                       style="{{ if not .IsUnlocked }}background: #faf9f5; border-style: dashed; opacity: 0.8;{{ end }}">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 600; font-size: 15px; color: #555;">{{ .Title }}</span>
-                            <span style="font-size: 16px; opacity: 0.7;">
-                                {{ if .IsUnlocked }}{{ if .IsRead }}📖{{ else }}📬{{ end }}{{ else }}🔒{{ end }}
-                            </span>
-                        </div>
-                        <div style="font-size: 11px; color: #aaa; margin-top: 6px;">
-                            {{ if .IsUnlocked }}
-                                {{ if .IsRead }}Partner has read this{{ else }}Delivered (Unread){{ end }}
-                            {{ else }}
-                                Sealed ({{ .UnlockType }})
-                            {{ end }}
-                        </div>
-                    </a>
+            <!-- TAB 3: HISTORY SENT -->
+            {{ if eq .Tab "history_tx" }}
+                {{ $hasHistoryTx := false }}
+                {{ range .Letters }}
+                    {{ if .IsSender }}
+                        {{ $hasHistoryTx = true }}
+                        <a {{ if .IsUnlocked }}href="/letter/view?id={{ .ID }}"{{ end }} 
+                           class="letter-card" 
+                           style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.6;{{ end }}">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 600; font-size: 16px; color: var(--text-main);">{{ .Title }}</span>
+                                <span style="font-size: 18px; opacity: 0.6;">
+                                    {{ if .IsUnlocked }}{{ if .IsRead }}📖{{ else }}📬{{ end }}{{ else }}🔒{{ end }}
+                                </span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                                {{ if .IsUnlocked }}
+                                    {{ if .IsRead }}Partner has read this{{ else }}Delivered (Unread){{ end }}
+                                {{ else }}
+                                    Sealed ({{ .UnlockType }})
+                                {{ end }}
+                            </div>
+                        </a>
+                    {{ end }}
+                {{ end }}
+                {{ if not $hasHistoryTx }}
+                    <div class="empty-state">You haven't written any letters yet.</div>
                 {{ end }}
             {{ end }}
-            {{ if not $hasHistoryTx }}
-                <div class="empty-state">You haven't written any letters yet.</div>
-            {{ end }}
-        {{ end }}
 
-        <!-- TAB 4: WRITE A LETTER -->
-        {{ if eq .Tab "write" }}
-            {{ if not .Partner.HasPartner }}
-                <p style="color: #888; font-size: 13px;">You need to link with a partner in the Partner tab before writing letters!</p>
-            {{ else }}
-                <form method="POST" action="/letters/write">
-                    <div class="input-group">
-                        <label>Title / Envelope Note</label>
-                        <input type="text" name="title" placeholder="e.g. Open when you miss me" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Letter Content</label>
-                        <textarea name="content" placeholder="Write your heart out..." required></textarea>
-                    </div>
-                    <div class="input-group">
-                        <label>Seal Condition</label>
-                        <select name="unlock_type" id="unlockType" onchange="toggleDateField()" style="width:100%; padding: 12px; border-radius: 8px; border: 1px solid #d6d3cb;">
-                            <option value="instant">Instant (Read right away)</option>
-                            <option value="date">Specific Date & Time</option>
-                            <option value="mutual_ready">Mutual Ready (Both must click ready)</option>
-                        </select>
-                    </div>
-                    <div class="input-group" id="datePickerGroup" style="display: none;">
-                        <label>Unlock Date</label>
-                        <input type="datetime-local" name="unlock_date">
-                    </div>
-                    <button type="submit">Seal & Send 💌</button>
-                </form>
+            <!-- TAB 4: WRITE A LETTER -->
+            {{ if eq .Tab "write" }}
+                {{ if not .Partner.HasPartner }}
+                    <div class="empty-state">You need to link with a partner in the Partner tab before writing letters!</div>
+                {{ else }}
+                    <form method="POST" action="/letters/write">
+                        <div class="input-group">
+                            <label>Title / Envelope Note</label>
+                            <input type="text" name="title" placeholder="e.g. Open when you miss me" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Letter Content</label>
+                            <textarea name="content" placeholder="Write your heart out..." required></textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Seal Condition</label>
+                            <select name="unlock_type" id="unlockType" onchange="toggleDateField()">
+                                <option value="instant">Instant (Read right away)</option>
+                                <option value="date">Specific Date & Time</option>
+                                <option value="mutual_ready">Mutual Ready (Both must click ready)</option>
+                            </select>
+                        </div>
+                        <div class="input-group" id="datePickerGroup" style="display: none;">
+                            <label>Unlock Date</label>
+                            <input type="datetime-local" name="unlock_date">
+                        </div>
+                        <button type="submit">Seal & Send 💌</button>
+                    </form>
+                {{ end }}
             {{ end }}
-        {{ end }}
 
-        <!-- TAB 5: PARTNER SETTINGS -->
-        {{ if eq .Tab "settings" }}
-            <div style="background: #181715; padding: 20px; border-radius: 16px; border: 1px solid #33312c; text-align: center; margin-bottom: 20px;">
-                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.2px;">Your Friend Code</p>
-                <div style="font-size: 24px; letter-spacing: 4px; color: var(--accent-yellow); font-family: monospace; font-weight: bold;">
-                    {{ .User.FriendCode }}
+            <!-- TAB 5: PARTNER SETTINGS -->
+            {{ if eq .Tab "settings" }}
+                <div style="background: #1f1c19; padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 25px; border: 1px solid var(--border-color);">
+                    <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1.5px;">Your Friend Code</p>
+                    <div class="code-reveal">
+                        {{ .User.FriendCode }}
+                    </div>
                 </div>
-            </div>
 
-            {{ if not .Partner.HasPartner }}
-                <!-- State 1: No partner -->
-                <form method="POST" action="/partner/add">
-                    <div class="input-group">
-                        <label>Link with a partner</label>
-                        <input type="text" name="friend_code" placeholder="Enter their code" required>
-                    </div>
-                    <button type="submit">Send Request</button>
-                </form>
-            {{ else }}
-                {{ if .Partner.IsPending }}
-                    <!-- State 2: Pending Request -->
-                    <div style="text-align: center; margin-bottom: 20px; padding: 15px; border: 1px dashed #33312c; border-radius: 12px;">
-                        {{ if .Partner.IsSender }}
-                            <p style="font-size: 14px; margin: 0 0 10px 0;">Request sent to <b>{{ .Partner.PartnerName }}</b></p>
-                        {{ else }}
-                            <p style="font-size: 14px; margin: 0 0 10px 0;"><b>{{ .Partner.PartnerName }}</b> wants to link!</p>
-                            <form method="POST" action="/partner/add" style="margin-bottom: 0;">
-                                <input type="hidden" name="friend_code" value="{{ .Partner.PartnerCode }}">
-                                <button type="submit" style="background: var(--accent-yellow); color: #161513;">Accept Request</button>
-                            </form>
-                        {{ end }}
-                    </div>
-                    <form method="POST" action="/partner/remove">
-                        <button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Cancel Request</button>
+                {{ if not .Partner.HasPartner }}
+                    <!-- State 1: No partner -->
+                    <form method="POST" action="/partner/add">
+                        <div class="input-group">
+                            <label>Link with a partner</label>
+                            <input type="text" name="friend_code" placeholder="Enter their code" required>
+                        </div>
+                        <button type="submit">Send Request</button>
                     </form>
                 {{ else }}
-                    <!-- State 3: Fully Linked -->
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <p style="font-size: 14px; margin: 0;">Linked with: <b>{{ .Partner.PartnerName }}</b></p>
-                    </div>
-                    <form method="POST" action="/partner/remove">
-                        <button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Sever Link</button>
-                    </form>
+                    {{ if .Partner.IsPending }}
+                        <!-- State 2: Pending Request -->
+                        <div style="text-align: center; margin-bottom: 20px; padding: 25px; border: 1px dashed var(--border-color); border-radius: 16px;">
+                            {{ if .Partner.IsSender }}
+                                <p style="font-size: 15px; margin: 0 0 10px 0;">Request sent to <b>{{ .Partner.PartnerName }}</b></p>
+                            {{ else }}
+                                <p style="font-size: 15px; margin: 0 0 15px 0;"><b>{{ .Partner.PartnerName }}</b> wants to link!</p>
+                                <form method="POST" action="/partner/add" style="margin-bottom: 0;">
+                                    <input type="hidden" name="friend_code" value="{{ .Partner.PartnerCode }}">
+                                    <button type="submit" style="background: var(--accent-yellow); color: #161412;">Accept Request</button>
+                                </form>
+                            {{ end }}
+                        </div>
+                        <form method="POST" action="/partner/remove">
+                            <button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Cancel Request</button>
+                        </form>
+                    {{ else }}
+                        <!-- State 3: Fully Linked -->
+                        <div style="text-align: center; margin-bottom: 25px; padding: 20px; background: #1f1c19; border-radius: 16px;">
+                            <p style="font-size: 15px; margin: 0;">Linked with <b>{{ .Partner.PartnerName }}</b> 🌻</p>
+                        </div>
+                        <form method="POST" action="/partner/remove">
+                            <button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Sever Link</button>
+                        </form>
+                    {{ end }}
                 {{ end }}
             {{ end }}
-        {{ end }}
 
-        <a href="/logout" class="link-btn" style="margin-top: 30px;">[ log out ]</a>
+        </div> <!-- END TAB CONTENT WRAPPER -->
+
+        <a href="/logout" class="link-btn">[ log out ]</a>
     </div>
 
     <script>
@@ -273,6 +203,34 @@
             var group = document.getElementById("datePickerGroup");
             group.style.display = (type === "date") ? "block" : "none";
         }
+    </script>
+    
+    <!-- AUDIO EASTER EGG -->
+    <button id="audio-toggle" style="background: transparent; color: #555; padding: 5px; width: auto; font-size: 12px; margin: 0; position: absolute; bottom: 15px; left: 15px; border: none; box-shadow: none;">
+        🔇
+    </button>
+    <script>
+        let audioEnabled = false;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        document.getElementById('audio-toggle').onclick = function() {
+            audioEnabled = !audioEnabled;
+            this.innerText = audioEnabled ? "🔊" : "🔇";
+        };
+        function playClick() {
+            if (!audioEnabled) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.08);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.08);
+        }
+        document.querySelectorAll('input, textarea, button').forEach(el => {
+            if(el.id !== 'audio-toggle') el.addEventListener('focus', playClick);
+        });
     </script>
 </body>
 </html>
