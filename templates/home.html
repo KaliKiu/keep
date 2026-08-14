@@ -219,7 +219,6 @@
 
         <!-- TAB 5: PARTNER SETTINGS -->
         {{ if eq .Tab "settings" }}
-            {{ if eq .Tab "settings" }}
             <div style="background: #181715; padding: 20px; border-radius: 16px; border: 1px solid #33312c; text-align: center; margin-bottom: 20px;">
                 <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.2px;">Your Friend Code</p>
                 <div style="font-size: 24px; letter-spacing: 4px; color: var(--accent-yellow); font-family: monospace; font-weight: bold;">
@@ -239,19 +238,19 @@
             {{ else }}
                 {{ if .Partner.IsPending }}
                     <!-- State 2: Pending Request -->
-                    <div style="text-align: center; margin-bottom: 20px; padding: 15px; border: 1px dashed #d6d3cb; border-radius: 8px;">
+                    <div style="text-align: center; margin-bottom: 20px; padding: 15px; border: 1px dashed #33312c; border-radius: 12px;">
                         {{ if .Partner.IsSender }}
                             <p style="font-size: 14px; margin: 0 0 10px 0;">Request sent to <b>{{ .Partner.PartnerName }}</b></p>
                         {{ else }}
                             <p style="font-size: 14px; margin: 0 0 10px 0;"><b>{{ .Partner.PartnerName }}</b> wants to link!</p>
                             <form method="POST" action="/partner/add" style="margin-bottom: 0;">
                                 <input type="hidden" name="friend_code" value="{{ .Partner.PartnerCode }}">
-                                <button type="submit" style="background: #2c2c2a; color: #c7b87c;">Accept Request</button>
+                                <button type="submit" style="background: var(--accent-yellow); color: #161513;">Accept Request</button>
                             </form>
                         {{ end }}
                     </div>
                     <form method="POST" action="/partner/remove">
-                        <button type="submit" style="background: transparent; color: #b2533e; border: 1px solid #b2533e;">Cancel Request</button>
+                        <button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Cancel Request</button>
                     </form>
                 {{ else }}
                     <!-- State 3: Fully Linked -->
@@ -259,11 +258,11 @@
                         <p style="font-size: 14px; margin: 0;">Linked with: <b>{{ .Partner.PartnerName }}</b></p>
                     </div>
                     <form method="POST" action="/partner/remove">
-                        <button type="submit" style="background: transparent; color: #b2533e; border: 1px solid #b2533e;">Sever Link</button>
+                        <button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Sever Link</button>
                     </form>
                 {{ end }}
             {{ end }}
-        {{ end }} <!-- This ends 'if eq .Tab "settings"' -->
+        {{ end }}
 
         <a href="/logout" class="link-btn" style="margin-top: 30px;">[ log out ]</a>
     </div>
