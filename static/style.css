@@ -1,88 +1,134 @@
 :root {
-    --bg: #100f0d;
-    --card: #1c1b19;
-    --accent: #fcd34d; /* Soft Sunflower Gold */
-    --text: #e7e5e4;
-    --text-muted: #a8a29e;
+    --bg-color: #161513;
+    --card-bg: #201f1c;
+    --text-main: #f4f1ea;
+    --text-muted: #9c978e;
+    --accent-yellow: #e5b567;
+    --accent-yellow-hover: #f0c674;
+    --border-color: #33312c;
+    --danger: #d56f5e;
 }
 
 body {
-    background-color: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     display: flex;
     justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
     padding: 20px;
+    box-sizing: border-box;
 }
 
 .card {
-    background: var(--card);
-    border-radius: 24px;
-    padding: 32px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 35px 30px;
+    border-radius: 16px;
     width: 100%;
-    max-width: 450px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-    border: 1px solid #333;
+    max-width: 440px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Smoother inputs */
-input, select, textarea {
-    background: #252422;
-    border: 2px solid transparent;
-    padding: 16px;
-    border-radius: 16px;
-    color: white;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+h2 {
+    margin: 0 0 5px 0;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--text-main);
+}
+
+.subtitle {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 25px;
+}
+
+.input-group {
+    margin-bottom: 18px;
+    text-align: left;
+}
+
+label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="datetime-local"],
+select,
+textarea {
     width: 100%;
+    padding: 14px 16px;
+    background: #181715;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-main);
+    font-size: 14px;
+    font-family: inherit;
     box-sizing: border-box;
-    font-size: 16px;
-    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.25s ease;
 }
 
-input:focus, textarea:focus {
-    border-color: var(--accent);
+input:focus, select:focus, textarea:focus {
     outline: none;
-    background: #2d2c2a;
+    border-color: var(--accent-yellow);
+    box-shadow: 0 0 0 3px rgba(229, 181, 103, 0.15);
 }
 
-/* Squishy Buttons */
 button {
-    background: var(--accent);
-    color: #000;
-    font-weight: 700;
-    padding: 16px;
-    border-radius: 16px;
+    background: var(--accent-yellow);
+    color: #161513;
     border: none;
-    cursor: pointer;
     width: 100%;
-    margin-top: 10px;
-    transition: transform 0.2s, filter 0.2s;
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 14px rgba(229, 181, 103, 0.2);
+    margin-top: 5px;
+}
+
+button:hover {
+    background: var(--accent-yellow-hover);
+    box-shadow: 0 6px 20px rgba(229, 181, 103, 0.3);
 }
 
 button:active {
-    transform: scale(0.96);
-    filter: brightness(0.9);
+    transform: scale(0.97); /* Super smooth button click physics! */
 }
 
-/* Tabs */
-.nav-tabs {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 30px;
-    background: #100f0d;
-    padding: 6px;
-    border-radius: 16px;
-}
-
-.tab-item {
-    padding: 10px 15px;
-    border-radius: 12px;
-    text-decoration: none;
+.link-btn {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
     color: var(--text-muted);
+    text-decoration: none;
     font-size: 13px;
-    font-weight: 600;
+    transition: color 0.2s;
 }
 
-.tab-item.active {
-    background: var(--card);
-    color: var(--accent);
+.link-btn:hover {
+    color: var(--accent-yellow);
+}
+
+.error {
+    color: var(--danger);
+    font-size: 13px;
+    margin-bottom: 15px;
 }
