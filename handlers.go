@@ -3,12 +3,12 @@ package main
 import (
 	"html/template"
 	"net/http"
+	"strconv"
 	"time"
 )
 
 var sessions = make(map[string]string)
 
-// Helper to render template files cleanly
 func renderTemplate(w http.ResponseWriter, tmplName string, data interface{}) {
 	tmpl, err := template.ParseFiles("templates/" + tmplName)
 	if err != nil {
@@ -20,7 +20,6 @@ func renderTemplate(w http.ResponseWriter, tmplName string, data interface{}) {
 
 func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	var errorMsg string
-
 	if r.Method == http.MethodPost {
 		r.ParseForm()
 		username := r.FormValue("username")
@@ -29,27 +28,17 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		if CheckUserCredentials(username, password) {
 			sessionToken := time.Now().Format("20060102150405") + "-" + username
 			sessions[sessionToken] = username
-
-			http.SetCookie(w, &http.Cookie{
-				Name:     "keep_session",
-				Value:    sessionToken,
-				Path:     "/",
-				Expires:  time.Now().Add(7 * 24 * time.Hour),
-				HttpOnly: true,
-			})
-
+			http.SetCookie(w, &http.Cookie{Name: "keep_session", Value: sessionToken, Path: "/", Expires: time.Now().Add(7 * 24 * time.Hour), HttpOnly: true})
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 		errorMsg = "Invalid username or password."
 	}
-
 	renderTemplate(w, "login.html", map[string]string{"Error": errorMsg})
 }
 
 func HandleRegister(w http.ResponseWriter, r *http.Request) {
 	var errorMsg string
-
 	if r.Method == http.MethodPost {
 		r.ParseForm()
 		username := r.FormValue("username")
@@ -61,14 +50,13 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 		} else {
 			err := RegisterUser(username, password)
 			if err != nil {
-				errorMsg = "Registration failed: Username likely already taken."
+				errorMsg = "Username already taken."
 			} else {
 				http.Redirect(w, r, "/login", http.StatusSeeOther)
 				return
 			}
 		}
 	}
-
 	renderTemplate(w, "register.html", map[string]string{"Error": errorMsg})
 }
 
@@ -76,12 +64,7 @@ func HandleLogout(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("keep_session")
 	if err == nil {
 		delete(sessions, cookie.Value)
-		http.SetCookie(w, &http.Cookie{
-			Name:   "keep_session",
-			Value:  "",
-			Path:   "/",
-			MaxAge: -1,
-		})
+		http.SetCookie(w, &http.Cookie{Name: "keep_session", Value: "", Path: "/", MaxAge: -1})
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
@@ -92,12 +75,126 @@ func HandleHome(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-
 	username, exists := sessions[cookie.Value]
 	if !exists {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
-	renderTemplate(w, "home.html", map[string]string{"Username": username})
+	user, _ := GetUserByUsername(username)
+	partnerInfo, _ := GetPartnershipInfo(user.ID)
+	letters, _ := GetVaultLetters(user.ID)
+
+	tab := r.URL.Query().Get("tab")
+	if tab == "" {
+		tab = "inbox" // Default to Inbox!
+	}
+
+	data := map[string]interface{}{
+		"User":    user,
+		"Partner": partnerInfo,
+		"Letters": letters,
+		"Tab":     tab,
+		"Error":   r.URL.Query().Get("err"),
+	}
+
+	renderTemplate(w, "home.html", data)
+}
+
+func HandleAddPartner(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	cookie, _ := r.Cookie("keep_session")
+	username, _ := sessions[cookie.Value]
+	user, _ := GetUserByUsername(username)
+
+	friendCode := r.FormValue("friend_code")
+	err := ProcessFriendCode(user.ID, friendCode)
+	if err != nil {
+		http.Redirect(w, r, "/?tab=settings&err="+err.Error(), http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, "/?tab=settings", http.StatusSeeOther)
+}
+
+func HandleRemovePartner(w http.ResponseWriter, r *http.Request) {
+	cookie, _ := r.Cookie("keep_session")
+	username, _ := sessions[cookie.Value]
+	user, _ := GetUserByUsername(username)
+
+	RemovePartnership(user.ID)
+	http.Redirect(w, r, "/?tab=settings", http.StatusSeeOther)
+}
+
+func HandleWriteLetter(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	cookie, _ := r.Cookie("keep_session")
+	username, _ := sessions[cookie.Value]
+	user, _ := GetUserByUsername(username)
+	partnerInfo, _ := GetPartnershipInfo(user.ID)
+
+	if !partnerInfo.HasPartner || partnerInfo.IsPending {
+		http.Redirect(w, r, "/?err=no_active_partner", http.StatusSeeOther)
+		return
+	}
+
+	r.ParseForm()
+	title := r.FormValue("title")
+	content := r.FormValue("content")
+	unlockType := r.FormValue("unlock_type")
+
+	var unlockAt *time.Time
+	if unlockType == "date" {
+		dateStr := r.FormValue("unlock_date")
+		parsedTime, err := time.Parse("2006-01-02T15:04", dateStr)
+		if err == nil {
+			unlockAt = &parsedTime
+		}
+	}
+
+	CreateLetter(user.ID, partnerInfo.PartnerID, title, content, unlockType, unlockAt)
+	http.Redirect(w, r, "/?tab=history_tx", http.StatusSeeOther)
+}
+
+func HandleViewLetter(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("keep_session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	username, _ := sessions[cookie.Value]
+	user, _ := GetUserByUsername(username)
+
+	letterIDStr := r.URL.Query().Get("id")
+	letterID, err := strconv.Atoi(letterIDStr)
+	if err != nil {
+		http.Redirect(w, r, "/?tab=inbox", http.StatusSeeOther)
+		return
+	}
+
+	letter, err := GetLetterByID(letterID, user.ID)
+	if err != nil {
+		http.Redirect(w, r, "/?tab=inbox", http.StatusSeeOther)
+		return
+	}
+
+	if !letter.IsUnlocked {
+		http.Redirect(w, r, "/?tab=inbox&err=Letter+is+still+sealed", http.StatusSeeOther)
+		return
+	}
+
+	// Mark as read if it's new for the receiver!
+	if !letter.IsSender && !letter.IsRead {
+		MarkLetterAsRead(letter.ID)
+	}
+
+	data := map[string]interface{}{
+		"Letter": letter,
+	}
+	renderTemplate(w, "letter.html", data)
 }
