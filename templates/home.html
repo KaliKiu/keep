@@ -218,13 +218,13 @@
         {{ end }}
 
         <!-- TAB 5: PARTNER SETTINGS -->
-        <!-- Inside Tab 5: Settings -->
-        <div style="background: #100f0d; padding: 20px; border-radius: 16px; border: 1px solid #333;">
-            <p style="font-size: 12px; color: var(--text-muted); text-align: center;">Your Friend Code</p>
-            <div class="code-reveal" style="font-size: 24px; letter-spacing: 4px; color: var(--accent);">
-                {{ .User.FriendCode }}
+        {{ if eq .Tab "settings" }}
+            <div style="background: #100f0d; padding: 20px; border-radius: 16px; border: 1px solid #333;">
+                <p style="font-size: 12px; color: var(--text-muted); text-align: center;">Your Friend Code</p>
+                <div class="code-reveal" style="font-size: 24px; letter-spacing: 4px; color: var(--accent);">
+                    {{ .User.FriendCode }}
+                </div>
             </div>
-        </div>
 
             {{ if not .Partner.HasPartner }}
                 <!-- State 1: No partner -->
@@ -236,16 +236,13 @@
                     <button type="submit">Send Request</button>
                 </form>
             {{ else }}
-                
                 {{ if .Partner.IsPending }}
                     <!-- State 2: Pending Request -->
                     <div style="text-align: center; margin-bottom: 20px; padding: 15px; border: 1px dashed #d6d3cb; border-radius: 8px;">
                         {{ if .Partner.IsSender }}
                             <p style="font-size: 14px; margin: 0 0 10px 0;">Request sent to <b>{{ .Partner.PartnerName }}</b></p>
-                            <p style="font-size: 12px; color: #888; margin: 0;">Waiting for them to add your code or click Accept.</p>
                         {{ else }}
                             <p style="font-size: 14px; margin: 0 0 10px 0;"><b>{{ .Partner.PartnerName }}</b> wants to link!</p>
-                            <!-- One-click accept! -->
                             <form method="POST" action="/partner/add" style="margin-bottom: 0;">
                                 <input type="hidden" name="friend_code" value="{{ .Partner.PartnerCode }}">
                                 <button type="submit" style="background: #2c2c2a; color: #faf9f5;">Accept Request</button>
@@ -255,7 +252,6 @@
                     <form method="POST" action="/partner/remove">
                         <button type="submit" style="background: transparent; color: #b2533e; border: 1px solid #b2533e;">Cancel Request</button>
                     </form>
-
                 {{ else }}
                     <!-- State 3: Fully Linked -->
                     <div style="text-align: center; margin-bottom: 20px;">
@@ -265,9 +261,8 @@
                         <button type="submit" style="background: transparent; color: #b2533e; border: 1px solid #b2533e;">Sever Link</button>
                     </form>
                 {{ end }}
-                
             {{ end }}
-        {{ end }}
+        {{ end }} <!-- This ends 'if eq .Tab "settings"' -->
 
         <a href="/logout" class="link-btn" style="margin-top: 30px;">[ log out ]</a>
     </div>
@@ -280,34 +275,31 @@
         }
     </script>
     <button id="audio-toggle" style="background: transparent; color: #555; padding: 5px; width: auto; font-size: 10px; margin-bottom: 20px;">
-    🔇 Sound Off
-</button>
+        🔇 Sound Off
+    </button>
 
-<script>
-    let audioEnabled = false;
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
-    document.getElementById('audio-toggle').onclick = function() {
-        audioEnabled = !audioEnabled;
-        this.innerText = audioEnabled ? "🔊 Sound On" : "🔇 Sound Off";
-    };
-
-    function playClick() {
-        if (!audioEnabled) return;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.1);
-    }
-
-    document.querySelectorAll('input, textarea, button').forEach(el => {
-        el.addEventListener('focus', playClick);
-    });
-</script>
+    <script>
+        let audioEnabled = false;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        document.getElementById('audio-toggle').onclick = function() {
+            audioEnabled = !audioEnabled;
+            this.innerText = audioEnabled ? "🔊 Sound On" : "🔇 Sound Off";
+        };
+        function playClick() {
+            if (!audioEnabled) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+        document.querySelectorAll('input, textarea, button').forEach(el => {
+            el.addEventListener('focus', playClick);
+        });
+    </script>
 </body>
 </html>
