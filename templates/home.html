@@ -276,5 +276,40 @@
             group.style.display = (type === "date") ? "block" : "none";
         }
     </script>
+    <script>
+        // Subtle mechanical typing sound generator using Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playClickSound() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            // Randomize pitch slightly for a natural mechanical sound
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(120 + Math.random() * 40, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.04);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.04);
+        }
+
+        // Attach typing sound to textareas and inputs
+        document.querySelectorAll('input, textarea').forEach(element => {
+            element.addEventListener('keydown', (e) => {
+                // Don't play on backspace/enter for variety, or play on all keys except modifiers
+                if (e.key.length === 1 || e.key === 'Backspace') {
+                    playClickSound();
+                }
+            });
+        });
+    </script>
 </body>
 </html>

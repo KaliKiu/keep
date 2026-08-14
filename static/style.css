@@ -1,106 +1,134 @@
+:root {
+    --bg-color: #161513;
+    --card-bg: #201f1c;
+    --text-main: #f4f1ea;
+    --text-muted: #9c978e;
+    --accent-yellow: #e5b567;
+    --accent-yellow-hover: #f0c674;
+    --border-color: #33312c;
+    --danger: #d56f5e;
+}
+
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #faf9f5;
-    color: #2c2c2a;
-    margin: 0;
-    padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-}
-
-.card {
-    width: 100%;
-    max-width: 360px;
-    padding: 40px 30px;
+    margin: 0;
+    padding: 20px;
     box-sizing: border-box;
 }
 
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 35px 30px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 h2 {
-    font-weight: 400;
-    letter-spacing: -0.5px;
-    margin: 0 0 4px 0;
+    margin: 0 0 5px 0;
     font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--text-main);
 }
 
 .subtitle {
-    color: #888;
+    color: var(--text-muted);
     font-size: 13px;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
 }
 
 .input-group {
-    margin-bottom: 16px;
+    margin-bottom: 18px;
+    text-align: left;
 }
 
 label {
     display: block;
     font-size: 11px;
-    color: #666;
-    letter-spacing: 0.5px;
     text-transform: uppercase;
-    margin-bottom: 6px;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
 }
 
-input {
+input[type="text"],
+input[type="password"],
+input[type="datetime-local"],
+select,
+textarea {
     width: 100%;
-    padding: 12px;
+    padding: 14px 16px;
+    background: #181715;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-main);
+    font-size: 14px;
+    font-family: inherit;
     box-sizing: border-box;
-    background: transparent;
-    border: 1px solid #d6d3cb;
-    border-radius: 8px;
-    font-size: 15px;
-    color: #2c2c2a;
+    transition: all 0.25s ease;
 }
 
-input:focus {
+input:focus, select:focus, textarea:focus {
     outline: none;
-    border-color: #2c2c2a;
+    border-color: var(--accent-yellow);
+    box-shadow: 0 0 0 3px rgba(229, 181, 103, 0.15);
 }
 
 button {
+    background: var(--accent-yellow);
+    color: #161513;
+    border: none;
     width: 100%;
     padding: 14px;
-    background: #2c2c2a;
-    color: #faf9f5;
-    border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    margin-top: 10px;
-    letter-spacing: 0.5px;
+    transition: transform 0.1s ease, background 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 14px rgba(229, 181, 103, 0.2);
+    margin-top: 5px;
+}
+
+button:hover {
+    background: var(--accent-yellow-hover);
+    box-shadow: 0 6px 20px rgba(229, 181, 103, 0.3);
 }
 
 button:active {
-    background: #000;
+    transform: scale(0.97); /* Super smooth button click physics! */
 }
 
 .link-btn {
     display: block;
     text-align: center;
     margin-top: 20px;
-    color: #666;
-    font-size: 13px;
+    color: var(--text-muted);
     text-decoration: none;
+    font-size: 13px;
+    transition: color 0.2s;
 }
 
 .link-btn:hover {
-    color: #2c2c2a;
+    color: var(--accent-yellow);
 }
 
 .error {
-    color: #b2533e;
+    color: var(--danger);
     font-size: 13px;
-    margin-bottom: 20px;
-    background: #fae8e5;
-    padding: 10px 12px;
-    border-radius: 6px;
-}
-
-.footer {
-    text-align: center;
-    color: #ccc;
-    font-size: 11px;
-    margin-top: 40px;
+    margin-bottom: 15px;
 }
