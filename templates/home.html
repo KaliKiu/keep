@@ -34,7 +34,7 @@
 						{{ $hasInbox = true }}
 						<a {{ if or .IsUnlocked (eq .UnlockType "mutual_ready") }}href="/letter/view?id={{ .ID }}"{{ end }} 
 						   class="letter-card" 
-						   style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.6; border-color: var(--border-color);{{ else }}border-color: #3b352e;{{ end }}">
+						   style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.7; border-color: var(--border-color);{{ else }}border-color: #3b352e;{{ end }}">
 							
 							<div style="display: flex; justify-content: space-between; align-items: center;">
 								<span style="font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 12px;">
@@ -46,16 +46,21 @@
 								</span>
 								<span style="font-size: 18px;">{{ if .IsUnlocked }}💌{{ else }}🔒{{ end }}</span>
 							</div>
-							<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
+							
+							<!-- ENHANCED UI BADGES FOR INBOX -->
+							<div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; padding-left: 34px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
 								{{ if .IsUnlocked }}
-									Tap to open and read
+									<span style="color: var(--accent-yellow); font-weight: 600;">✨ Ready to read</span>
 								{{ else }}
 									{{ if eq .UnlockType "date" }}
-										Unlocks on: {{ .UnlockAt.Format "Jan 02, 2006 at 15:04" }}
+										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">⏳ Time-Locked</span>
+										<span>Unlocks on {{ .UnlockAt.Format "Jan 02" }}</span>
 									{{ else if eq .UnlockType "random" }}
-										Random Surprise Seal
+										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">🎲 Random Time</span>
+										<span>Will drop as a surprise</span>
 									{{ else if eq .UnlockType "mutual_ready" }}
-										Tap to enter mutual standoff
+										<span style="background: rgba(255, 200, 44, 0.15); color: var(--accent-yellow); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">🤝 Mutual Ready</span>
+										<span>Tap to check in</span>
 									{{ end }}
 								{{ end }}
 							</div>
@@ -100,7 +105,7 @@
 						{{ $hasHistoryTx = true }}
 						<a {{ if or .IsUnlocked (eq .UnlockType "mutual_ready") }}href="/letter/view?id={{ .ID }}"{{ end }} 
 						   class="letter-card" 
-						   style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.6;{{ end }}">
+						   style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.7;{{ end }}">
 							<div style="display: flex; justify-content: space-between; align-items: center;">
 								<span style="font-weight: 600; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
 									<span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
@@ -110,14 +115,25 @@
 									{{ if .IsUnlocked }}{{ if .IsRead }}📖{{ else }}📬{{ end }}{{ else }}🔒{{ end }}
 								</span>
 							</div>
-							<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
+							
+							<!-- ENHANCED UI BADGES FOR SENT FOLDER -->
+							<div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; padding-left: 34px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
 								{{ if .IsUnlocked }}
-									{{ if .IsRead }}Partner has read this{{ else }}Delivered (Unread){{ end }}
-								{{ else }}
-									{{ if eq .UnlockType "mutual_ready" }}
-										Tap to check readiness
+									{{ if .IsRead }}
+										<span style="color: var(--text-muted);">📖 Partner read this</span>
 									{{ else }}
-										Sealed ({{ .UnlockType }})
+										<span style="color: var(--accent-yellow); font-weight: 600;">📬 Delivered (Unread)</span>
+									{{ end }}
+								{{ else }}
+									{{ if eq .UnlockType "date" }}
+										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">⏳ Time-Locked</span>
+										<span>Unlocks on {{ .UnlockAt.Format "Jan 02" }}</span>
+									{{ else if eq .UnlockType "random" }}
+										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">🎲 Random Time</span>
+										<span>Waiting to drop</span>
+									{{ else if eq .UnlockType "mutual_ready" }}
+										<span style="background: rgba(255, 200, 44, 0.15); color: var(--accent-yellow); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">🤝 Mutual Ready</span>
+										<span>Tap to check in</span>
 									{{ end }}
 								{{ end }}
 							</div>
