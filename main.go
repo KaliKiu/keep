@@ -39,14 +39,7 @@ func main() {
 	http.HandleFunc("/letter/reply", HandleReplyLetter)
 	http.HandleFunc("/profile/update", HandleUpdateProfile)
 
-	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("keep_session")
-		if err != nil || sessions[cookie.Value] == "" {
-			http.Error(w, "Unauthorized - Please log in", http.StatusUnauthorized)
-			return
-		}
-		http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP(w, r)
-	})
+	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {})
 
 	http.HandleFunc("/uploads/", func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("keep_session")
