@@ -39,8 +39,28 @@ func main() {
 	http.HandleFunc("/letter/reply", HandleReplyLetter)
 	http.HandleFunc("/profile/update", HandleUpdateProfile)
 
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
+	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("keep_session")
+		if err != nil || sessions[cookie.Value] == "" {
+			http.Error(w, "Unauthorized - Please log in", http.StatusUnauthorized)
+			return
+		}
+		http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP(w, r)
+	})
+
+	http.HandleFunc("/uploads/", func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("keep_session")
+		if err != nil || sessions[cookie.Value] == "" {
+			http.Error(w, "Unauthorized - Please log in", http.StatusUnauthorized)
+			return
+		}
+		if r.URL.Path == "/uploads/" {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))).ServeHTTP(w, r)
+	})
 
 	serverAddress := ":" + port
 	fmt.Printf("Server running at http://localhost%s 🌻\n", serverAddress)
