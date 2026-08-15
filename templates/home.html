@@ -4,6 +4,18 @@
 	<title>keep.</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="/static/style.css">
+	<style>
+		.pfp-circle {
+			width: 80px; height: 80px; border-radius: 50%;
+			object-fit: cover; border: 2px solid var(--accent-yellow);
+			background: #2e2a25; display: flex; align-items: center;
+			justify-content: center; font-size: 32px; margin: 0 auto 15px auto;
+		}
+		.status-bubble {
+			background: rgba(255, 200, 44, 0.15); color: var(--accent-yellow);
+			padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600;
+		}
+	</style>
 </head>
 <body>
 	<div class="card">
@@ -20,7 +32,7 @@
 			<a href="/?tab=history_rx" class="tab-item {{ if eq .Tab "history_rx" }}active{{ end }}">Received</a>
 			<a href="/?tab=history_tx" class="tab-item {{ if eq .Tab "history_tx" }}active{{ end }}">Sent</a>
 			<a href="/?tab=write" class="tab-item {{ if eq .Tab "write" }}active{{ end }}">Write</a>
-			<a href="/?tab=settings" class="tab-item {{ if eq .Tab "settings" }}active{{ end }}">Partner</a>
+			<a href="/?tab=profile" class="tab-item {{ if eq .Tab "profile" }}active{{ end }}">Profile</a>
 		</div>
 
 		<!-- SMOOTH ANIMATION WRAPPER -->
@@ -47,7 +59,7 @@
 								<span style="font-size: 18px;">{{ if .IsUnlocked }}💌{{ else }}🔒{{ end }}</span>
 							</div>
 							
-							<!-- ENHANCED UI BADGES FOR INBOX -->
+							<!-- ENHANCED UI BADGES -->
 							<div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; padding-left: 34px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
 								{{ if .IsUnlocked }}
 									<span style="color: var(--accent-yellow); font-weight: 600;">✨ Ready to read</span>
@@ -87,7 +99,7 @@
 								<span style="font-size: 18px; opacity: 0.6;">📖</span>
 							</div>
 							<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
-								Opened • Sent on {{ .CreatedAt.Format "Jan 02, 2006" }}
+								<span style="color: var(--text-main);">Read at {{ .ReadAt.Format "Jan 02, 15:04" }}</span> • Sent {{ .CreatedAt.Format "Jan 02, 2006" }}
 							</div>
 						</a>
 					{{ end }}
@@ -116,13 +128,12 @@
 								</span>
 							</div>
 							
-							<!-- ENHANCED UI BADGES FOR SENT FOLDER -->
 							<div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; padding-left: 34px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
 								{{ if .IsUnlocked }}
 									{{ if .IsRead }}
-										<span style="color: var(--text-muted);">📖 Partner read this</span>
+										<span style="color: var(--text-muted);">📖 Read at {{ .ReadAt.Format "Jan 02, 15:04" }}</span>
 									{{ else }}
-										<span style="color: var(--accent-yellow); font-weight: 600;">📬 Delivered (Unread)</span>
+										<span style="color: var(--accent-yellow); font-weight: 600;">📬 Sent {{ .CreatedAt.Format "Jan 02, 15:04" }} (Unread)</span>
 									{{ end }}
 								{{ else }}
 									{{ if eq .UnlockType "date" }}
@@ -148,7 +159,7 @@
 			<!-- TAB 4: WRITE A LETTER -->
 			{{ if eq .Tab "write" }}
 				{{ if not .Partner.HasPartner }}
-					<div class="empty-state">You need to link with a partner in the Partner tab before writing letters!</div>
+					<div class="empty-state">You need to link with a partner in the Profile tab before writing letters!</div>
 				{{ else }}
 					<form method="POST" action="/letters/write" enctype="multipart/form-data">
 						<div class="input-group">
@@ -205,48 +216,105 @@
 				{{ end }}
 			{{ end }}
 
-			<!-- TAB 5: PARTNER SETTINGS -->
-			{{ if eq .Tab "settings" }}
-				<div style="background: #1f1c19; padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 25px; border: 1px solid var(--border-color);">
-					<p style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1.5px;">Your Friend Code</p>
-					<div class="code-reveal">
-						{{ .User.FriendCode }}
+			<!-- TAB 5: PROFILE & PARTNER -->
+			{{ if eq .Tab "profile" }}
+				
+				<!-- Split Profile Grid -->
+				<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px;">
+					
+					<!-- 1. YOUR PROFILE -->
+					<div style="background: #1f1c19; border: 1px solid var(--border-color); padding: 25px 20px; border-radius: 24px; text-align: center; position: relative;">
+						{{ if .User.PfpPath }}
+							<img src="{{ .User.PfpPath }}" class="pfp-circle">
+						{{ else }}
+							<div class="pfp-circle">🌻</div>
+						{{ end }}
+						<h3 style="margin: 0 0 10px 0; font-size: 20px;">You ({{ .User.Username }})</h3>
+						<span class="status-bubble">{{ .User.Status }}</span>
+						<p style="color: var(--text-muted); font-size: 14px; margin-top: 15px; line-height: 1.5;">{{ .User.Bio }}</p>
+						
+						<button onclick="document.getElementById('editProfileForm').style.display='block'" style="background: transparent; border: 1px dashed var(--border-color); color: var(--text-muted); padding: 8px; font-size: 12px; margin-top: 15px; width: 100%;">Edit Profile</button>
 					</div>
+
+					<!-- 2. PARTNER PROFILE -->
+					{{ if .Partner.HasPartner }}
+						<div style="background: #1f1c19; border: 1px solid var(--border-color); padding: 25px 20px; border-radius: 24px; text-align: center;">
+							{{ if .PartnerProfile.PfpPath }}
+								<img src="{{ .PartnerProfile.PfpPath }}" class="pfp-circle">
+							{{ else }}
+								<div class="pfp-circle">🤍</div>
+							{{ end }}
+							<h3 style="margin: 0 0 10px 0; font-size: 20px;">{{ .PartnerProfile.Username }}</h3>
+							<span class="status-bubble">{{ .PartnerProfile.Status }}</span>
+							<p style="color: var(--text-muted); font-size: 14px; margin-top: 15px; line-height: 1.5;">{{ .PartnerProfile.Bio }}</p>
+						</div>
+					{{ else }}
+						<div style="background: transparent; border: 1px dashed var(--border-color); padding: 25px 20px; border-radius: 24px; text-align: center; display: flex; flex-direction: column; justify-content: center; opacity: 0.6;">
+							<div class="pfp-circle" style="border-color: var(--border-color); background: transparent;">?</div>
+							<p style="font-size: 14px;">No partner linked yet.</p>
+						</div>
+					{{ end }}
 				</div>
 
-				{{ if not .Partner.HasPartner }}
-					<form method="POST" action="/partner/add">
+				<!-- HIDDEN EDIT PROFILE FORM -->
+				<div id="editProfileForm" style="display: none; background: #1f1c19; border: 1px solid var(--accent-yellow); padding: 20px; border-radius: 16px; margin-bottom: 25px;">
+					<h4 style="margin: 0 0 15px 0;">Update Your Vibe</h4>
+					<form method="POST" action="/profile/update" enctype="multipart/form-data">
 						<div class="input-group">
-							<label>Link with a partner</label>
-							<input type="text" name="friend_code" placeholder="Enter their code" required>
+							<label>Status Emoji or Word</label>
+							<input type="text" name="status" value="{{ .User.Status }}" placeholder="e.g. 🎧 Listening to lofi" required>
 						</div>
-						<button type="submit">Send Request</button>
+						<div class="input-group">
+							<label>Short Bio</label>
+							<textarea name="bio" style="min-height: 80px;" required>{{ .User.Bio }}</textarea>
+						</div>
+						<div class="input-group" style="background: #161412; padding: 10px; border-radius: 10px;">
+							<label>Profile Picture</label>
+							<input type="file" name="pfp" accept="image/*" style="font-size: 12px; border: none; padding: 5px;">
+						</div>
+						<button type="submit" style="padding: 12px; font-size: 14px;">Save Profile</button>
+						<button type="button" onclick="document.getElementById('editProfileForm').style.display='none'" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 12px; font-size: 14px;">Cancel</button>
 					</form>
-				{{ else }}
-					{{ if .Partner.IsPending }}
-						<div style="text-align: center; margin-bottom: 20px; padding: 25px; border: 1px dashed var(--border-color); border-radius: 16px;">
-							{{ if .Partner.IsSender }}
-								<p style="font-size: 15px; margin: 0 0 10px 0;">Request sent to <b>{{ .Partner.PartnerName }}</b></p>
-							{{ else }}
-								<p style="font-size: 15px; margin: 0 0 15px 0;"><b>{{ .Partner.PartnerName }}</b> wants to link!</p>
-								<form method="POST" action="/partner/add" style="margin-bottom: 0;">
-									<input type="hidden" name="friend_code" value="{{ .Partner.PartnerCode }}">
-									<button type="submit" style="background: var(--accent-yellow); color: #161412;">Accept Request</button>
-								</form>
-							{{ end }}
-						</div>
-						<form method="POST" action="/partner/remove">
-							<button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Cancel Request</button>
+				</div>
+
+				<!-- FRIEND CODE SECTION -->
+				<div style="border-top: 1px dashed var(--border-color); padding-top: 25px;">
+					<p style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1.5px; text-align: center;">Your Friend Code</p>
+					<div class="code-reveal" style="margin-bottom: 25px;">
+						{{ .User.FriendCode }}
+					</div>
+
+					{{ if not .Partner.HasPartner }}
+						<form method="POST" action="/partner/add">
+							<div class="input-group">
+								<label>Link with a partner</label>
+								<input type="text" name="friend_code" placeholder="Enter their code" required>
+							</div>
+							<button type="submit">Send Request</button>
 						</form>
 					{{ else }}
-						<div style="text-align: center; margin-bottom: 25px; padding: 20px; background: #1f1c19; border-radius: 16px;">
-							<p style="font-size: 15px; margin: 0;">Linked with <b>{{ .Partner.PartnerName }}</b> 🌻</p>
-						</div>
-						<form method="POST" action="/partner/remove">
-							<button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Sever Link</button>
-						</form>
+						{{ if .Partner.IsPending }}
+							<div style="text-align: center; margin-bottom: 20px; padding: 25px; border: 1px dashed var(--border-color); border-radius: 16px;">
+								{{ if .Partner.IsSender }}
+									<p style="font-size: 15px; margin: 0 0 10px 0;">Request sent to <b>{{ .Partner.PartnerName }}</b></p>
+								{{ else }}
+									<p style="font-size: 15px; margin: 0 0 15px 0;"><b>{{ .Partner.PartnerName }}</b> wants to link!</p>
+									<form method="POST" action="/partner/add" style="margin-bottom: 0;">
+										<input type="hidden" name="friend_code" value="{{ .Partner.PartnerCode }}">
+										<button type="submit" style="background: var(--accent-yellow); color: #161412;">Accept Request</button>
+									</form>
+								{{ end }}
+							</div>
+							<form method="POST" action="/partner/remove">
+								<button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Cancel Request</button>
+							</form>
+						{{ else }}
+							<form method="POST" action="/partner/remove">
+								<button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Sever Link</button>
+							</form>
+						{{ end }}
 					{{ end }}
-				{{ end }}
+				</div>
 			{{ end }}
 
 		</div> <!-- END TAB CONTENT WRAPPER -->

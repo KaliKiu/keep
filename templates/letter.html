@@ -72,7 +72,10 @@
 				</div>
 				
 				<p style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; padding-left: 50px;">
-					Written on {{ .Letter.CreatedAt.Format "January 02, 2006" }}
+					Sent on {{ .Letter.CreatedAt.Format "Jan 02, 2006 at 15:04" }}
+					{{ if .Letter.IsRead }}
+						<br><span style="color: var(--accent-yellow);">Read on {{ .Letter.ReadAt.Format "Jan 02, 2006 at 15:04" }}</span>
+					{{ end }}
 				</p>
 
 				<hr style="border: none; border-top: 1px solid var(--border-color); margin-bottom: 20px;">
@@ -92,7 +95,7 @@
 						{{ range .Letter.Replies }}
 							<div class="reply-card">
 								<div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
-									{{ if .IsSender }}You{{ else }}Partner{{ end }} replied • {{ .CreatedAt.Format "Jan 02 15:04" }}
+									{{ if .IsSender }}You{{ else }}Partner{{ end }} replied • {{ .CreatedAt.Format "Jan 02 at 15:04" }}
 								</div>
 								{{ if .ImagePath }}
 									<img src="{{ .ImagePath }}" style="width: 100%; max-width: 200px; border-radius: 8px; margin-bottom: 15px;">

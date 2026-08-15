@@ -26,7 +26,10 @@ func InitDB(dbPath string) {
 		id INTEGER PRIMARY KEY AUTOINCREMENT, 
 		username TEXT UNIQUE, 
 		password_hash TEXT,
-		friend_code TEXT UNIQUE
+		friend_code TEXT UNIQUE,
+		bio TEXT DEFAULT 'Just setting up my keep.',
+		status TEXT DEFAULT '🌻',
+		pfp_path TEXT DEFAULT ''
 	);`
 	db.Exec(queryUsers)
 
@@ -54,6 +57,7 @@ func InitDB(dbPath string) {
 		receiver_ready BOOLEAN DEFAULT 0,
 		is_read BOOLEAN DEFAULT 0,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		read_at DATETIME DEFAULT NULL,
 		parent_id INTEGER DEFAULT NULL,
 		image_path TEXT DEFAULT '',
 		FOREIGN KEY(sender_id) REFERENCES users(id),
@@ -67,6 +71,11 @@ func InitDB(dbPath string) {
 	db.Exec("ALTER TABLE letters ADD COLUMN emoji TEXT DEFAULT '💌'")
 	db.Exec("ALTER TABLE letters ADD COLUMN parent_id INTEGER DEFAULT NULL")
 	db.Exec("ALTER TABLE letters ADD COLUMN image_path TEXT DEFAULT ''")
+	db.Exec("ALTER TABLE letters ADD COLUMN read_at DATETIME DEFAULT NULL")
+
+	db.Exec("ALTER TABLE users ADD COLUMN bio TEXT DEFAULT 'Just setting up my keep.'")
+	db.Exec("ALTER TABLE users ADD COLUMN status TEXT DEFAULT '🌻'")
+	db.Exec("ALTER TABLE users ADD COLUMN pfp_path TEXT DEFAULT ''")
 }
 
 func generateFriendCode() string {
@@ -96,9 +105,25 @@ func CheckUserCredentials(username, password string) bool {
 
 func GetUserByUsername(username string) (User, error) {
 	var u User
-	err := db.QueryRow("SELECT id, username, friend_code FROM users WHERE username = ?", username).
-		Scan(&u.ID, &u.Username, &u.FriendCode)
+	err := db.QueryRow("SELECT id, username, friend_code, bio, status, pfp_path FROM users WHERE username = ?", username).
+		Scan(&u.ID, &u.Username, &u.FriendCode, &u.Bio, &u.Status, &u.PfpPath)
 	return u, err
+}
+
+func GetUserByID(id int) (User, error) {
+	var u User
+	err := db.QueryRow("SELECT id, username, friend_code, bio, status, pfp_path FROM users WHERE id = ?", id).
+		Scan(&u.ID, &u.Username, &u.FriendCode, &u.Bio, &u.Status, &u.PfpPath)
+	return u, err
+}
+
+func UpdateUserProfile(userID int, bio, status, pfpPath string) error {
+	if pfpPath != "" {
+		_, err := db.Exec("UPDATE users SET bio = ?, status = ?, pfp_path = ? WHERE id = ?", bio, status, pfpPath, userID)
+		return err
+	}
+	_, err := db.Exec("UPDATE users SET bio = ?, status = ? WHERE id = ?", bio, status, userID)
+	return err
 }
 
 func GetPartnershipInfo(userID int) (PartnershipInfo, error) {
@@ -175,7 +200,7 @@ func CreateLetter(senderID, receiverID int, title, content, emoji, unlockType st
 
 func GetVaultLetters(userID int) ([]Letter, error) {
 	query := `
-	SELECT id, sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, sender_ready, receiver_ready, is_read, created_at, image_path
+	SELECT id, sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, sender_ready, receiver_ready, is_read, created_at, read_at, image_path
 	FROM letters 
 	WHERE (sender_id = ? OR receiver_id = ?) AND parent_id IS NULL
 	ORDER BY created_at DESC`
@@ -189,13 +214,16 @@ func GetVaultLetters(userID int) ([]Letter, error) {
 	var letters []Letter
 	for rows.Next() {
 		var l Letter
-		var unlockAt sql.NullTime
-		err := rows.Scan(&l.ID, &l.SenderID, &l.ReceiverID, &l.Title, &l.Content, &l.Emoji, &l.UnlockType, &unlockAt, &l.SenderReady, &l.ReceiverReady, &l.IsRead, &l.CreatedAt, &l.ImagePath)
+		var unlockAt, readAt sql.NullTime
+		err := rows.Scan(&l.ID, &l.SenderID, &l.ReceiverID, &l.Title, &l.Content, &l.Emoji, &l.UnlockType, &unlockAt, &l.SenderReady, &l.ReceiverReady, &l.IsRead, &l.CreatedAt, &readAt, &l.ImagePath)
 		if err != nil {
 			return nil, err
 		}
 		if unlockAt.Valid {
 			l.UnlockAt = &unlockAt.Time
+		}
+		if readAt.Valid {
+			l.ReadAt = &readAt.Time
 		}
 
 		l.IsSender = (l.SenderID == userID)
@@ -218,21 +246,24 @@ func GetVaultLetters(userID int) ([]Letter, error) {
 
 func GetLetterByID(letterID, userID int) (Letter, error) {
 	var l Letter
-	var unlockAt sql.NullTime
+	var unlockAt, readAt sql.NullTime
 	query := `
-	SELECT id, sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, sender_ready, receiver_ready, is_read, created_at, image_path
+	SELECT id, sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, sender_ready, receiver_ready, is_read, created_at, read_at, image_path
 	FROM letters 
 	WHERE id = ? AND (sender_id = ? OR receiver_id = ?)`
 
 	err := db.QueryRow(query, letterID, userID, userID).Scan(
 		&l.ID, &l.SenderID, &l.ReceiverID, &l.Title, &l.Content, &l.Emoji,
-		&l.UnlockType, &unlockAt, &l.SenderReady, &l.ReceiverReady, &l.IsRead, &l.CreatedAt, &l.ImagePath,
+		&l.UnlockType, &unlockAt, &l.SenderReady, &l.ReceiverReady, &l.IsRead, &l.CreatedAt, &readAt, &l.ImagePath,
 	)
 	if err != nil {
 		return l, err
 	}
 	if unlockAt.Valid {
 		l.UnlockAt = &unlockAt.Time
+	}
+	if readAt.Valid {
+		l.ReadAt = &readAt.Time
 	}
 
 	l.IsSender = (l.SenderID == userID)
@@ -258,7 +289,7 @@ func GetLetterByID(letterID, userID int) (Letter, error) {
 		}
 	}
 
-	// Fetch threads
+	// Fetch threads (replies)
 	rows, _ := db.Query("SELECT id, sender_id, receiver_id, title, content, emoji, created_at, image_path FROM letters WHERE parent_id = ? ORDER BY created_at ASC", letterID)
 	defer rows.Close()
 	for rows.Next() {
@@ -287,6 +318,7 @@ func ToggleReadyStatus(letterID, userID int) error {
 }
 
 func MarkLetterAsRead(letterID int) error {
-	_, err := db.Exec("UPDATE letters SET is_read = 1 WHERE id = ?", letterID)
+	// Captures exactly when they opened it!
+	_, err := db.Exec("UPDATE letters SET is_read = 1, read_at = ? WHERE id = ?", time.Now(), letterID)
 	return err
 }

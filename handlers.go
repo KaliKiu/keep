@@ -87,22 +87,59 @@ func HandleHome(w http.ResponseWriter, r *http.Request) {
 
 	user, _ := GetUserByUsername(username)
 	partnerInfo, _ := GetPartnershipInfo(user.ID)
+
+	// Fetch Partner's full profile to display it!
+	var partnerProfile User
+	if partnerInfo.HasPartner {
+		partnerProfile, _ = GetUserByID(partnerInfo.PartnerID)
+	}
+
 	letters, _ := GetVaultLetters(user.ID)
 
 	tab := r.URL.Query().Get("tab")
 	if tab == "" {
-		tab = "inbox" // Default to Inbox!
+		tab = "inbox"
 	}
 
 	data := map[string]interface{}{
-		"User":    user,
-		"Partner": partnerInfo,
-		"Letters": letters,
-		"Tab":     tab,
-		"Error":   r.URL.Query().Get("err"),
+		"User":           user,
+		"Partner":        partnerInfo,
+		"PartnerProfile": partnerProfile,
+		"Letters":        letters,
+		"Tab":            tab,
+		"Error":          r.URL.Query().Get("err"),
 	}
 
 	renderTemplate(w, "home.html", data)
+}
+
+func HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	cookie, _ := r.Cookie("keep_session")
+	username, _ := sessions[cookie.Value]
+	user, _ := GetUserByUsername(username)
+
+	r.ParseMultipartForm(10 << 20)
+	bio := r.FormValue("bio")
+	status := r.FormValue("status")
+
+	var imagePath string
+	file, header, err := r.FormFile("pfp")
+	if err == nil {
+		defer file.Close()
+		os.MkdirAll("uploads", os.ModePerm)
+		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), header.Filename)
+		out, _ := os.Create("uploads/" + filename)
+		defer out.Close()
+		io.Copy(out, file)
+		imagePath = "/uploads/" + filename
+	}
+
+	UpdateUserProfile(user.ID, bio, status, imagePath)
+	http.Redirect(w, r, "/?tab=profile", http.StatusSeeOther)
 }
 
 func HandleAddPartner(w http.ResponseWriter, r *http.Request) {
@@ -117,10 +154,10 @@ func HandleAddPartner(w http.ResponseWriter, r *http.Request) {
 	friendCode := r.FormValue("friend_code")
 	err := ProcessFriendCode(user.ID, friendCode)
 	if err != nil {
-		http.Redirect(w, r, "/?tab=settings&err="+err.Error(), http.StatusSeeOther)
+		http.Redirect(w, r, "/?tab=profile&err="+err.Error(), http.StatusSeeOther)
 		return
 	}
-	http.Redirect(w, r, "/?tab=settings", http.StatusSeeOther)
+	http.Redirect(w, r, "/?tab=profile", http.StatusSeeOther)
 }
 
 func HandleRemovePartner(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +166,7 @@ func HandleRemovePartner(w http.ResponseWriter, r *http.Request) {
 	user, _ := GetUserByUsername(username)
 
 	RemovePartnership(user.ID)
-	http.Redirect(w, r, "/?tab=settings", http.StatusSeeOther)
+	http.Redirect(w, r, "/?tab=profile", http.StatusSeeOther)
 }
 
 func HandleWriteLetter(w http.ResponseWriter, r *http.Request) {
@@ -147,7 +184,6 @@ func HandleWriteLetter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Must parse multipart for files!
 	r.ParseMultipartForm(10 << 20)
 	title := r.FormValue("title")
 	content := r.FormValue("content")
@@ -214,12 +250,12 @@ func HandleViewLetter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// We allow viewing if it is unlocked OR if it's mutual ready (so they can press the button)
 	if !letter.IsUnlocked && letter.UnlockType != "mutual_ready" {
 		http.Redirect(w, r, "/?tab=inbox&err=Letter+is+still+sealed", http.StatusSeeOther)
 		return
 	}
 
+	// Trigger read receipt the moment they open it!
 	if letter.IsUnlocked && !letter.IsSender && !letter.IsRead {
 		MarkLetterAsRead(letter.ID)
 	}
