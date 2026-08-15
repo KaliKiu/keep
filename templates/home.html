@@ -1,255 +1,277 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>keep.</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/style.css">
+	<title>keep.</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="card">
-        <h2>keep. 🌻</h2>
-        <p class="subtitle">logged in as <b>{{ .User.Username }}</b></p>
+	<div class="card">
+		<h2>keep. 🌻</h2>
+		<p class="subtitle">logged in as <b>{{ .User.Username }}</b></p>
 
-        {{ if .Error }}
-            <div class="error" style="text-align: center; margin-bottom: 15px;">{{ .Error }}</div>
-        {{ end }}
+		{{ if .Error }}
+			<div class="error" style="text-align: center; margin-bottom: 15px;">{{ .Error }}</div>
+		{{ end }}
 
-        <!-- SUB NAVIGATION TABS -->
-        <div class="nav-tabs">
-            <a href="/?tab=inbox" class="tab-item {{ if eq .Tab "inbox" }}active{{ end }}">Inbox</a>
-            <a href="/?tab=history_rx" class="tab-item {{ if eq .Tab "history_rx" }}active{{ end }}">Received</a>
-            <a href="/?tab=history_tx" class="tab-item {{ if eq .Tab "history_tx" }}active{{ end }}">Sent</a>
-            <a href="/?tab=write" class="tab-item {{ if eq .Tab "write" }}active{{ end }}">Write</a>
-            <a href="/?tab=settings" class="tab-item {{ if eq .Tab "settings" }}active{{ end }}">Partner</a>
-        </div>
+		<!-- SUB NAVIGATION TABS -->
+		<div class="nav-tabs">
+			<a href="/?tab=inbox" class="tab-item {{ if eq .Tab "inbox" }}active{{ end }}">Inbox</a>
+			<a href="/?tab=history_rx" class="tab-item {{ if eq .Tab "history_rx" }}active{{ end }}">Received</a>
+			<a href="/?tab=history_tx" class="tab-item {{ if eq .Tab "history_tx" }}active{{ end }}">Sent</a>
+			<a href="/?tab=write" class="tab-item {{ if eq .Tab "write" }}active{{ end }}">Write</a>
+			<a href="/?tab=settings" class="tab-item {{ if eq .Tab "settings" }}active{{ end }}">Partner</a>
+		</div>
 
-        <!-- SMOOTH ANIMATION WRAPPER -->
-        <div class="tab-content">
-            
-            <!-- TAB 1: INBOX -->
-            {{ if eq .Tab "inbox" }}
-                {{ $hasInbox := false }}
-                {{ range .Letters }}
-                    {{ if and (not .IsSender) (not .IsRead) }}
-                        {{ $hasInbox = true }}
-                        <a {{ if .IsUnlocked }}href="/letter/view?id={{ .ID }}"{{ end }} 
-                           class="letter-card" 
-                           style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.6; border-color: var(--border-color);{{ else }}border-color: #3b352e;{{ end }}">
-                            
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 12px;">
-                                    <span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
-                                    <span>
-                                        {{ .Title }} 
-                                        {{ if .IsUnlocked }}<span class="unread-dot"></span>{{ end }}
-                                    </span>
-                                </span>
-                                <span style="font-size: 18px;">{{ if .IsUnlocked }}💌{{ else }}🔒{{ end }}</span>
-                            </div>
-                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
-                                {{ if .IsUnlocked }}
-                                    Tap to open and read
-                                {{ else }}
-                                    {{ if eq .UnlockType "date" }}
-                                        Unlocks on: {{ .UnlockAt.Format "Jan 02, 2006 at 15:04" }}
-                                    {{ else if eq .UnlockType "mutual_ready" }}
-                                        Waiting for mutual ready
-                                    {{ end }}
-                                {{ end }}
-                            </div>
-                        </a>
-                    {{ end }}
-                {{ end }}
-                {{ if not $hasInbox }}
-                    <div class="empty-state">No new letters waiting for you.</div>
-                {{ end }}
-            {{ end }}
+		<!-- SMOOTH ANIMATION WRAPPER -->
+		<div class="tab-content">
+			
+			<!-- TAB 1: INBOX -->
+			{{ if eq .Tab "inbox" }}
+				{{ $hasInbox := false }}
+				{{ range .Letters }}
+					{{ if and (not .IsSender) (not .IsRead) }}
+						{{ $hasInbox = true }}
+						<a {{ if or .IsUnlocked (eq .UnlockType "mutual_ready") }}href="/letter/view?id={{ .ID }}"{{ end }} 
+						   class="letter-card" 
+						   style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.6; border-color: var(--border-color);{{ else }}border-color: #3b352e;{{ end }}">
+							
+							<div style="display: flex; justify-content: space-between; align-items: center;">
+								<span style="font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 12px;">
+									<span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
+									<span>
+										{{ .Title }} 
+										{{ if .IsUnlocked }}<span class="unread-dot"></span>{{ end }}
+									</span>
+								</span>
+								<span style="font-size: 18px;">{{ if .IsUnlocked }}💌{{ else }}🔒{{ end }}</span>
+							</div>
+							<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
+								{{ if .IsUnlocked }}
+									Tap to open and read
+								{{ else }}
+									{{ if eq .UnlockType "date" }}
+										Unlocks on: {{ .UnlockAt.Format "Jan 02, 2006 at 15:04" }}
+									{{ else if eq .UnlockType "random" }}
+										Random Surprise Seal
+									{{ else if eq .UnlockType "mutual_ready" }}
+										Tap to enter mutual standoff
+									{{ end }}
+								{{ end }}
+							</div>
+						</a>
+					{{ end }}
+				{{ end }}
+				{{ if not $hasInbox }}
+					<div class="empty-state">No new letters waiting for you.</div>
+				{{ end }}
+			{{ end }}
 
-            <!-- TAB 2: HISTORY RECEIVED -->
-            {{ if eq .Tab "history_rx" }}
-                {{ $hasHistoryRx := false }}
-                {{ range .Letters }}
-                    {{ if and (not .IsSender) .IsRead }}
-                        {{ $hasHistoryRx = true }}
-                        <a href="/letter/view?id={{ .ID }}" class="letter-card">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-weight: 600; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
-                                    <span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
-                                    <span>{{ .Title }}</span>
-                                </span>
-                                <span style="font-size: 18px; opacity: 0.6;">📖</span>
-                            </div>
-                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
-                                Opened • Sent on {{ .CreatedAt.Format "Jan 02, 2006" }}
-                            </div>
-                        </a>
-                    {{ end }}
-                {{ end }}
-                {{ if not $hasHistoryRx }}
-                    <div class="empty-state">You haven't opened any letters yet.</div>
-                {{ end }}
-            {{ end }}
+			<!-- TAB 2: HISTORY RECEIVED -->
+			{{ if eq .Tab "history_rx" }}
+				{{ $hasHistoryRx := false }}
+				{{ range .Letters }}
+					{{ if and (not .IsSender) .IsRead }}
+						{{ $hasHistoryRx = true }}
+						<a href="/letter/view?id={{ .ID }}" class="letter-card">
+							<div style="display: flex; justify-content: space-between; align-items: center;">
+								<span style="font-weight: 600; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
+									<span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
+									<span>{{ .Title }}</span>
+								</span>
+								<span style="font-size: 18px; opacity: 0.6;">📖</span>
+							</div>
+							<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
+								Opened • Sent on {{ .CreatedAt.Format "Jan 02, 2006" }}
+							</div>
+						</a>
+					{{ end }}
+				{{ end }}
+				{{ if not $hasHistoryRx }}
+					<div class="empty-state">You haven't opened any letters yet.</div>
+				{{ end }}
+			{{ end }}
 
-            <!-- TAB 3: HISTORY SENT -->
-            {{ if eq .Tab "history_tx" }}
-                {{ $hasHistoryTx := false }}
-                {{ range .Letters }}
-                    {{ if .IsSender }}
-                        {{ $hasHistoryTx = true }}
-                        <a {{ if .IsUnlocked }}href="/letter/view?id={{ .ID }}"{{ end }} 
-                           class="letter-card" 
-                           style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.6;{{ end }}">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-weight: 600; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
-                                    <span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
-                                    <span>{{ .Title }}</span>
-                                </span>
-                                <span style="font-size: 18px; opacity: 0.6;">
-                                    {{ if .IsUnlocked }}{{ if .IsRead }}📖{{ else }}📬{{ end }}{{ else }}🔒{{ end }}
-                                </span>
-                            </div>
-                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
-                                {{ if .IsUnlocked }}
-                                    {{ if .IsRead }}Partner has read this{{ else }}Delivered (Unread){{ end }}
-                                {{ else }}
-                                    Sealed ({{ .UnlockType }})
-                                {{ end }}
-                            </div>
-                        </a>
-                    {{ end }}
-                {{ end }}
-                {{ if not $hasHistoryTx }}
-                    <div class="empty-state">You haven't written any letters yet.</div>
-                {{ end }}
-            {{ end }}
+			<!-- TAB 3: HISTORY SENT -->
+			{{ if eq .Tab "history_tx" }}
+				{{ $hasHistoryTx := false }}
+				{{ range .Letters }}
+					{{ if .IsSender }}
+						{{ $hasHistoryTx = true }}
+						<a {{ if or .IsUnlocked (eq .UnlockType "mutual_ready") }}href="/letter/view?id={{ .ID }}"{{ end }} 
+						   class="letter-card" 
+						   style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.6;{{ end }}">
+							<div style="display: flex; justify-content: space-between; align-items: center;">
+								<span style="font-weight: 600; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
+									<span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
+									<span>{{ .Title }}</span>
+								</span>
+								<span style="font-size: 18px; opacity: 0.6;">
+									{{ if .IsUnlocked }}{{ if .IsRead }}📖{{ else }}📬{{ end }}{{ else }}🔒{{ end }}
+								</span>
+							</div>
+							<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
+								{{ if .IsUnlocked }}
+									{{ if .IsRead }}Partner has read this{{ else }}Delivered (Unread){{ end }}
+								{{ else }}
+									{{ if eq .UnlockType "mutual_ready" }}
+										Tap to check readiness
+									{{ else }}
+										Sealed ({{ .UnlockType }})
+									{{ end }}
+								{{ end }}
+							</div>
+						</a>
+					{{ end }}
+				{{ end }}
+				{{ if not $hasHistoryTx }}
+					<div class="empty-state">You haven't written any letters yet.</div>
+				{{ end }}
+			{{ end }}
 
-            <!-- TAB 4: WRITE A LETTER -->
-            {{ if eq .Tab "write" }}
-                {{ if not .Partner.HasPartner }}
-                    <div class="empty-state">You need to link with a partner in the Partner tab before writing letters!</div>
-                {{ else }}
-                    <form method="POST" action="/letters/write">
-                        <div class="input-group">
-                            <label>Vibe / Emoji</label>
-                            <select name="emoji">
-                                <option value="💌">💌 Love Letter</option>
-                                <option value="🌻">🌻 Sunflower</option>
-                                <option value="🌙">🌙 Midnight Thought</option>
-                                <option value="☕">☕ Cozy Coffee</option>
-                                <option value="⭐">⭐ Special Moment</option>
-                                <option value="🌧️">🌧️ Rainy Day</option>
-                                <option value="🎧">🎧 Lo-Fi Jam</option>
-                                <option value="🐈">🐈 Cute Cat</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label>Title / Envelope Note</label>
-                            <input type="text" name="title" placeholder="e.g. Open when you miss me" required>
-                        </div>
-                        <div class="input-group">
-                            <label>Letter Content</label>
-                            <textarea name="content" placeholder="Write your heart out..." required></textarea>
-                        </div>
-                        <div class="input-group">
-                            <label>Seal Condition</label>
-                            <select name="unlock_type" id="unlockType" onchange="toggleDateField()">
-                                <option value="instant">Instant (Read right away)</option>
-                                <option value="date">Specific Date & Time</option>
-                                <option value="mutual_ready">Mutual Ready (Both must click ready)</option>
-                            </select>
-                        </div>
-                        <div class="input-group" id="datePickerGroup" style="display: none;">
-                            <label>Unlock Date</label>
-                            <input type="datetime-local" name="unlock_date">
-                        </div>
-                        <button type="submit">Seal & Send 💌</button>
-                    </form>
-                {{ end }}
-            {{ end }}
+			<!-- TAB 4: WRITE A LETTER -->
+			{{ if eq .Tab "write" }}
+				{{ if not .Partner.HasPartner }}
+					<div class="empty-state">You need to link with a partner in the Partner tab before writing letters!</div>
+				{{ else }}
+					<form method="POST" action="/letters/write" enctype="multipart/form-data">
+						<div class="input-group">
+							<label>Vibe / Emoji</label>
+							<select name="emoji">
+								<option value="💌">💌 Love Letter</option>
+								<option value="🌻">🌻 Sunflower</option>
+								<option value="🌙">🌙 Midnight Thought</option>
+								<option value="🎲">🎲 Random Surprise</option>
+								<option value="📷">📷 Photo Memory</option>
+								<option value="☕">☕ Cozy Coffee</option>
+								<option value="⭐">⭐ Special Moment</option>
+								<option value="🌧️">🌧️ Rainy Day</option>
+								<option value="🎧">🎧 Lo-Fi Jam</option>
+								<option value="🐈">🐈 Cute Cat</option>
+							</select>
+						</div>
+						<div class="input-group">
+							<label>Title / Envelope Note</label>
+							<input type="text" name="title" placeholder="e.g. Open when you miss me" required>
+						</div>
+						<div class="input-group">
+							<label>Letter Content</label>
+							<textarea name="content" placeholder="Write your heart out..." required></textarea>
+						</div>
+						<div class="input-group" style="background: #1f1c19; padding: 15px; border-radius: 14px; border: 1px dashed var(--border-color);">
+							<label style="margin-bottom: 5px;">Attach a Photo (Optional)</label>
+							<input type="file" name="image" accept="image/*" style="padding: 10px; border: none; background: transparent; font-size: 14px;">
+						</div>
+						<div class="input-group" style="margin-top: 20px;">
+							<label>Seal Condition</label>
+							<select name="unlock_type" id="unlockType" onchange="toggleDateField()">
+								<option value="instant">Instant (Read right away)</option>
+								<option value="date">Specific Date & Time</option>
+								<option value="mutual_ready">Mutual Ready (Both must click ready)</option>
+								<option value="random">Random Time Surprise</option>
+							</select>
+						</div>
+						<div class="input-group" id="datePickerGroup" style="display: none;">
+							<label>Unlock Date</label>
+							<input type="datetime-local" name="unlock_date">
+						</div>
+						<div class="input-group" id="randomPickerGroup" style="display: none;">
+							<label>Unlock Randomly Within...</label>
+							<select name="random_days">
+								<option value="1">The next 24 hours</option>
+								<option value="7">The next 7 days</option>
+								<option value="14">The next 14 days</option>
+								<option value="30">The next month</option>
+							</select>
+						</div>
+						<button type="submit">Seal & Send 💌</button>
+					</form>
+				{{ end }}
+			{{ end }}
 
-            <!-- TAB 5: PARTNER SETTINGS -->
-            {{ if eq .Tab "settings" }}
-                <div style="background: #1f1c19; padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 25px; border: 1px solid var(--border-color);">
-                    <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1.5px;">Your Friend Code</p>
-                    <div class="code-reveal">
-                        {{ .User.FriendCode }}
-                    </div>
-                </div>
+			<!-- TAB 5: PARTNER SETTINGS -->
+			{{ if eq .Tab "settings" }}
+				<div style="background: #1f1c19; padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 25px; border: 1px solid var(--border-color);">
+					<p style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1.5px;">Your Friend Code</p>
+					<div class="code-reveal">
+						{{ .User.FriendCode }}
+					</div>
+				</div>
 
-                {{ if not .Partner.HasPartner }}
-                    <form method="POST" action="/partner/add">
-                        <div class="input-group">
-                            <label>Link with a partner</label>
-                            <input type="text" name="friend_code" placeholder="Enter their code" required>
-                        </div>
-                        <button type="submit">Send Request</button>
-                    </form>
-                {{ else }}
-                    {{ if .Partner.IsPending }}
-                        <div style="text-align: center; margin-bottom: 20px; padding: 25px; border: 1px dashed var(--border-color); border-radius: 16px;">
-                            {{ if .Partner.IsSender }}
-                                <p style="font-size: 15px; margin: 0 0 10px 0;">Request sent to <b>{{ .Partner.PartnerName }}</b></p>
-                            {{ else }}
-                                <p style="font-size: 15px; margin: 0 0 15px 0;"><b>{{ .Partner.PartnerName }}</b> wants to link!</p>
-                                <form method="POST" action="/partner/add" style="margin-bottom: 0;">
-                                    <input type="hidden" name="friend_code" value="{{ .Partner.PartnerCode }}">
-                                    <button type="submit" style="background: var(--accent-yellow); color: #161412;">Accept Request</button>
-                                </form>
-                            {{ end }}
-                        </div>
-                        <form method="POST" action="/partner/remove">
-                            <button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Cancel Request</button>
-                        </form>
-                    {{ else }}
-                        <div style="text-align: center; margin-bottom: 25px; padding: 20px; background: #1f1c19; border-radius: 16px;">
-                            <p style="font-size: 15px; margin: 0;">Linked with <b>{{ .Partner.PartnerName }}</b> 🌻</p>
-                        </div>
-                        <form method="POST" action="/partner/remove">
-                            <button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Sever Link</button>
-                        </form>
-                    {{ end }}
-                {{ end }}
-            {{ end }}
+				{{ if not .Partner.HasPartner }}
+					<form method="POST" action="/partner/add">
+						<div class="input-group">
+							<label>Link with a partner</label>
+							<input type="text" name="friend_code" placeholder="Enter their code" required>
+						</div>
+						<button type="submit">Send Request</button>
+					</form>
+				{{ else }}
+					{{ if .Partner.IsPending }}
+						<div style="text-align: center; margin-bottom: 20px; padding: 25px; border: 1px dashed var(--border-color); border-radius: 16px;">
+							{{ if .Partner.IsSender }}
+								<p style="font-size: 15px; margin: 0 0 10px 0;">Request sent to <b>{{ .Partner.PartnerName }}</b></p>
+							{{ else }}
+								<p style="font-size: 15px; margin: 0 0 15px 0;"><b>{{ .Partner.PartnerName }}</b> wants to link!</p>
+								<form method="POST" action="/partner/add" style="margin-bottom: 0;">
+									<input type="hidden" name="friend_code" value="{{ .Partner.PartnerCode }}">
+									<button type="submit" style="background: var(--accent-yellow); color: #161412;">Accept Request</button>
+								</form>
+							{{ end }}
+						</div>
+						<form method="POST" action="/partner/remove">
+							<button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Cancel Request</button>
+						</form>
+					{{ else }}
+						<div style="text-align: center; margin-bottom: 25px; padding: 20px; background: #1f1c19; border-radius: 16px;">
+							<p style="font-size: 15px; margin: 0;">Linked with <b>{{ .Partner.PartnerName }}</b> 🌻</p>
+						</div>
+						<form method="POST" action="/partner/remove">
+							<button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Sever Link</button>
+						</form>
+					{{ end }}
+				{{ end }}
+			{{ end }}
 
-        </div> <!-- END TAB CONTENT WRAPPER -->
+		</div> <!-- END TAB CONTENT WRAPPER -->
 
-        <a href="/logout" class="link-btn">[ log out ]</a>
-    </div>
+		<a href="/logout" class="link-btn">[ log out ]</a>
+	</div>
 
-    <script>
-        function toggleDateField() {
-            var type = document.getElementById("unlockType").value;
-            var group = document.getElementById("datePickerGroup");
-            group.style.display = (type === "date") ? "block" : "none";
-        }
-    </script>
-    
-    <!-- AUDIO EASTER EGG -->
-    <button id="audio-toggle" style="background: transparent; color: #555; padding: 5px; width: auto; font-size: 12px; margin: 0; position: absolute; bottom: 15px; left: 15px; border: none; box-shadow: none;">
-        🔇
-    </button>
-    <script>
-        let audioEnabled = false;
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        document.getElementById('audio-toggle').onclick = function() {
-            audioEnabled = !audioEnabled;
-            this.innerText = audioEnabled ? "🔊" : "🔇";
-        };
-        function playClick() {
-            if (!audioEnabled) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.08);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.08);
-        }
-        document.querySelectorAll('input, textarea, button, select').forEach(el => {
-            if(el.id !== 'audio-toggle') el.addEventListener('focus', playClick);
-        });
-    </script>
+	<script>
+		function toggleDateField() {
+			var type = document.getElementById("unlockType").value;
+			document.getElementById("datePickerGroup").style.display = (type === "date") ? "block" : "none";
+			document.getElementById("randomPickerGroup").style.display = (type === "random") ? "block" : "none";
+		}
+	</script>
+	
+	<!-- AUDIO EASTER EGG -->
+	<button id="audio-toggle" style="background: transparent; color: #555; padding: 5px; width: auto; font-size: 12px; margin: 0; position: absolute; bottom: 15px; left: 15px; border: none; box-shadow: none;">
+		🔇
+	</button>
+	<script>
+		let audioEnabled = false;
+		const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+		document.getElementById('audio-toggle').onclick = function() {
+			audioEnabled = !audioEnabled;
+			this.innerText = audioEnabled ? "🔊" : "🔇";
+		};
+		function playClick() {
+			if (!audioEnabled) return;
+			const osc = audioCtx.createOscillator();
+			const gain = audioCtx.createGain();
+			osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+			gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+			gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.08);
+			osc.connect(gain);
+			gain.connect(audioCtx.destination);
+			osc.start();
+			osc.stop(audioCtx.currentTime + 0.08);
+		}
+		document.querySelectorAll('input, textarea, button, select').forEach(el => {
+			if(el.id !== 'audio-toggle') el.addEventListener('focus', playClick);
+		});
+	</script>
 </body>
 </html>

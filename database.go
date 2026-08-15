@@ -22,53 +22,51 @@ func InitDB(dbPath string) {
 	}
 
 	queryUsers := `
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        username TEXT UNIQUE, 
-        password_hash TEXT,
-        friend_code TEXT UNIQUE
-    );`
+	CREATE TABLE IF NOT EXISTS users (
+		id INTEGER PRIMARY KEY AUTOINCREMENT, 
+		username TEXT UNIQUE, 
+		password_hash TEXT,
+		friend_code TEXT UNIQUE
+	);`
 	db.Exec(queryUsers)
 
 	queryPartners := `
-    CREATE TABLE IF NOT EXISTS partnerships (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user1_id INTEGER,
-        user2_id INTEGER,
-        status TEXT,
-        UNIQUE(user1_id, user2_id)
-    );`
+	CREATE TABLE IF NOT EXISTS partnerships (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user1_id INTEGER,
+		user2_id INTEGER,
+		status TEXT,
+		UNIQUE(user1_id, user2_id)
+	);`
 	db.Exec(queryPartners)
 
 	queryLetters := `
-    CREATE TABLE IF NOT EXISTS letters (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sender_id INTEGER,
-        receiver_id INTEGER,
-        title TEXT,
-        content TEXT,
-        emoji TEXT DEFAULT '💌',
-        unlock_type TEXT,      
-        unlock_at DATETIME,    
-        sender_ready BOOLEAN DEFAULT 0,
-        receiver_ready BOOLEAN DEFAULT 0,
-        is_read BOOLEAN DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(sender_id) REFERENCES users(id),
-        FOREIGN KEY(receiver_id) REFERENCES users(id)
-    );`
+	CREATE TABLE IF NOT EXISTS letters (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		sender_id INTEGER,
+		receiver_id INTEGER,
+		title TEXT,
+		content TEXT,
+		emoji TEXT DEFAULT '💌',
+		unlock_type TEXT,      
+		unlock_at DATETIME,    
+		sender_ready BOOLEAN DEFAULT 0,
+		receiver_ready BOOLEAN DEFAULT 0,
+		is_read BOOLEAN DEFAULT 0,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		parent_id INTEGER DEFAULT NULL,
+		image_path TEXT DEFAULT '',
+		FOREIGN KEY(sender_id) REFERENCES users(id),
+		FOREIGN KEY(receiver_id) REFERENCES users(id),
+		FOREIGN KEY(parent_id) REFERENCES letters(id)
+	);`
 	db.Exec(queryLetters)
 
 	// Migrations for existing databases
-	_, err = db.Exec("ALTER TABLE letters ADD COLUMN is_read BOOLEAN DEFAULT 0")
-	if err == nil {
-		log.Println("Migration successful: added 'is_read' column.")
-	}
-
-	_, err = db.Exec("ALTER TABLE letters ADD COLUMN emoji TEXT DEFAULT '💌'")
-	if err == nil {
-		log.Println("Migration successful: added 'emoji' column to letters table.")
-	}
+	db.Exec("ALTER TABLE letters ADD COLUMN is_read BOOLEAN DEFAULT 0")
+	db.Exec("ALTER TABLE letters ADD COLUMN emoji TEXT DEFAULT '💌'")
+	db.Exec("ALTER TABLE letters ADD COLUMN parent_id INTEGER DEFAULT NULL")
+	db.Exec("ALTER TABLE letters ADD COLUMN image_path TEXT DEFAULT ''")
 }
 
 func generateFriendCode() string {
@@ -109,10 +107,10 @@ func GetPartnershipInfo(userID int) (PartnershipInfo, error) {
 	var status, pName, pCode string
 
 	query := `
-    SELECT p.user1_id, p.user2_id, p.status, u.id, u.username, u.friend_code 
-    FROM partnerships p
-    JOIN users u ON u.id = CASE WHEN p.user1_id = ? THEN p.user2_id ELSE p.user1_id END
-    WHERE p.user1_id = ? OR p.user2_id = ? LIMIT 1`
+	SELECT p.user1_id, p.user2_id, p.status, u.id, u.username, u.friend_code 
+	FROM partnerships p
+	JOIN users u ON u.id = CASE WHEN p.user1_id = ? THEN p.user2_id ELSE p.user1_id END
+	WHERE p.user1_id = ? OR p.user2_id = ? LIMIT 1`
 
 	err := db.QueryRow(query, userID, userID, userID).Scan(&u1, &u2, &status, &partnerID, &pName, &pCode)
 	if err != nil {
@@ -164,24 +162,23 @@ func RemovePartnership(userID int) error {
 	return err
 }
 
-// CREATE LETTER WITH EMOJI FALLBACK
-func CreateLetter(senderID, receiverID int, title, content, emoji, unlockType string, unlockAt *time.Time) error {
+func CreateLetter(senderID, receiverID int, title, content, emoji, unlockType string, unlockAt *time.Time, parentID *int, imagePath string) error {
 	if emoji == "" {
 		emoji = "💌"
 	}
 	_, err := db.Exec(
-		"INSERT INTO letters (sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-		senderID, receiverID, title, content, emoji, unlockType, unlockAt,
+		"INSERT INTO letters (sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, parent_id, image_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		senderID, receiverID, title, content, emoji, unlockType, unlockAt, parentID, imagePath,
 	)
 	return err
 }
 
 func GetVaultLetters(userID int) ([]Letter, error) {
 	query := `
-    SELECT id, sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, sender_ready, receiver_ready, is_read, created_at 
-    FROM letters 
-    WHERE sender_id = ? OR receiver_id = ? 
-    ORDER BY created_at DESC`
+	SELECT id, sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, sender_ready, receiver_ready, is_read, created_at, image_path
+	FROM letters 
+	WHERE (sender_id = ? OR receiver_id = ?) AND parent_id IS NULL
+	ORDER BY created_at DESC`
 
 	rows, err := db.Query(query, userID, userID)
 	if err != nil {
@@ -193,7 +190,7 @@ func GetVaultLetters(userID int) ([]Letter, error) {
 	for rows.Next() {
 		var l Letter
 		var unlockAt sql.NullTime
-		err := rows.Scan(&l.ID, &l.SenderID, &l.ReceiverID, &l.Title, &l.Content, &l.Emoji, &l.UnlockType, &unlockAt, &l.SenderReady, &l.ReceiverReady, &l.IsRead, &l.CreatedAt)
+		err := rows.Scan(&l.ID, &l.SenderID, &l.ReceiverID, &l.Title, &l.Content, &l.Emoji, &l.UnlockType, &unlockAt, &l.SenderReady, &l.ReceiverReady, &l.IsRead, &l.CreatedAt, &l.ImagePath)
 		if err != nil {
 			return nil, err
 		}
@@ -205,7 +202,7 @@ func GetVaultLetters(userID int) ([]Letter, error) {
 		l.IsUnlocked = false
 		if l.UnlockType == "instant" {
 			l.IsUnlocked = true
-		} else if l.UnlockType == "date" && l.UnlockAt != nil {
+		} else if (l.UnlockType == "date" || l.UnlockType == "random") && l.UnlockAt != nil {
 			if time.Now().After(*l.UnlockAt) {
 				l.IsUnlocked = true
 			}
@@ -223,13 +220,13 @@ func GetLetterByID(letterID, userID int) (Letter, error) {
 	var l Letter
 	var unlockAt sql.NullTime
 	query := `
-    SELECT id, sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, sender_ready, receiver_ready, is_read, created_at 
-    FROM letters 
-    WHERE id = ? AND (sender_id = ? OR receiver_id = ?)`
+	SELECT id, sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, sender_ready, receiver_ready, is_read, created_at, image_path
+	FROM letters 
+	WHERE id = ? AND (sender_id = ? OR receiver_id = ?)`
 
 	err := db.QueryRow(query, letterID, userID, userID).Scan(
 		&l.ID, &l.SenderID, &l.ReceiverID, &l.Title, &l.Content, &l.Emoji,
-		&l.UnlockType, &unlockAt, &l.SenderReady, &l.ReceiverReady, &l.IsRead, &l.CreatedAt,
+		&l.UnlockType, &unlockAt, &l.SenderReady, &l.ReceiverReady, &l.IsRead, &l.CreatedAt, &l.ImagePath,
 	)
 	if err != nil {
 		return l, err
@@ -239,10 +236,19 @@ func GetLetterByID(letterID, userID int) (Letter, error) {
 	}
 
 	l.IsSender = (l.SenderID == userID)
+
+	if l.IsSender {
+		l.CurrentUserReady = l.SenderReady
+		l.PartnerReady = l.ReceiverReady
+	} else {
+		l.CurrentUserReady = l.ReceiverReady
+		l.PartnerReady = l.SenderReady
+	}
+
 	l.IsUnlocked = false
 	if l.UnlockType == "instant" {
 		l.IsUnlocked = true
-	} else if l.UnlockType == "date" && l.UnlockAt != nil {
+	} else if (l.UnlockType == "date" || l.UnlockType == "random") && l.UnlockAt != nil {
 		if time.Now().After(*l.UnlockAt) {
 			l.IsUnlocked = true
 		}
@@ -251,7 +257,33 @@ func GetLetterByID(letterID, userID int) (Letter, error) {
 			l.IsUnlocked = true
 		}
 	}
+
+	// Fetch threads
+	rows, _ := db.Query("SELECT id, sender_id, receiver_id, title, content, emoji, created_at, image_path FROM letters WHERE parent_id = ? ORDER BY created_at ASC", letterID)
+	defer rows.Close()
+	for rows.Next() {
+		var reply Letter
+		rows.Scan(&reply.ID, &reply.SenderID, &reply.ReceiverID, &reply.Title, &reply.Content, &reply.Emoji, &reply.CreatedAt, &reply.ImagePath)
+		reply.IsSender = (reply.SenderID == userID)
+		reply.IsUnlocked = true
+		l.Replies = append(l.Replies, reply)
+	}
+
 	return l, nil
+}
+
+func ToggleReadyStatus(letterID, userID int) error {
+	var senderID int
+	err := db.QueryRow("SELECT sender_id FROM letters WHERE id = ?", letterID).Scan(&senderID)
+	if err != nil {
+		return err
+	}
+	if senderID == userID {
+		_, err = db.Exec("UPDATE letters SET sender_ready = NOT sender_ready WHERE id = ?", letterID)
+	} else {
+		_, err = db.Exec("UPDATE letters SET receiver_ready = NOT receiver_ready WHERE id = ?", letterID)
+	}
+	return err
 }
 
 func MarkLetterAsRead(letterID int) error {

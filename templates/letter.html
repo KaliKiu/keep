@@ -1,44 +1,137 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>keep. 💌</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/style.css">
+	<title>keep. 💌</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="/static/style.css">
+	<style>
+		.prose {
+			font-size: 16px; 
+			line-height: 1.7; 
+			color: var(--text-main); 
+			white-space: pre-wrap; 
+			word-wrap: break-word;
+			overflow-wrap: break-word;
+			text-align: left;
+		}
+		.reply-card {
+			background: #1a1815;
+			border-left: 3px solid var(--border-color);
+			padding: 20px;
+			margin-top: 15px;
+			border-radius: 0 16px 16px 0;
+		}
+	</style>
 </head>
 <body>
-    <div class="card" style="justify-content: space-between;">
-        
-        <div>
-            <a href="/?tab=inbox" class="link-btn" style="text-align: left; margin-top: 0; margin-bottom: 25px; display: inline-block;">
-                ← Back to Inbox
-            </a>
+	<div class="card" style="justify-content: space-between;">
+		
+		<div>
+			<a href="/?tab=inbox" class="link-btn" style="text-align: left; margin-top: 0; margin-bottom: 25px; display: inline-block;">
+				← Back to Inbox
+			</a>
 
-            <!-- Letter Paper Container -->
-            <div class="tab-content" style="background: #1f1c19; border: 1px solid var(--border-color); padding: 30px; border-radius: 24px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.2);">
-                
-                <!-- Emoji & Title Header -->
-                <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 8px;">
-                    <span style="font-size: 36px;">{{ if .Letter.Emoji }}{{ .Letter.Emoji }}{{ else }}💌{{ end }}</span>
-                    <h2 style="font-size: 24px; margin: 0; color: var(--text-main);">{{ .Letter.Title }}</h2>
-                </div>
-                
-                <!-- Date Meta -->
-                <p style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; padding-left: 50px;">
-                    Written on {{ .Letter.CreatedAt.Format "January 02, 2006" }}
-                </p>
+			<!-- STATE 1: LOCKED MUTUAL READY STANDOFF -->
+			{{ if and (not .Letter.IsUnlocked) (eq .Letter.UnlockType "mutual_ready") }}
+			<div class="tab-content" style="background: #1f1c19; border: 1px dashed var(--accent-yellow); padding: 40px 30px; border-radius: 24px; text-align: center;">
+				<span style="font-size: 40px; display: block; margin-bottom: 15px;">🔒</span>
+				<h2 style="font-size: 24px; margin-bottom: 25px; color: var(--text-main);">Mutual Ready Standoff</h2>
+				
+				<div style="display: flex; justify-content: space-around; margin-bottom: 30px;">
+					<div>
+						<div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">You</div>
+						<div style="font-size: 16px; color: {{ if .Letter.CurrentUserReady }}var(--accent-yellow){{ else }}var(--text-muted){{ end }};">
+							{{ if .Letter.CurrentUserReady }}✅ Ready{{ else }}⏳ Waiting{{ end }}
+						</div>
+					</div>
+					<div>
+						<div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Partner</div>
+						<div style="font-size: 16px; color: {{ if .Letter.PartnerReady }}var(--accent-yellow){{ else }}var(--text-muted){{ end }};">
+							{{ if .Letter.PartnerReady }}✅ Ready{{ else }}⏳ Waiting{{ end }}
+						</div>
+					</div>
+				</div>
 
-                <hr style="border: none; border-top: 1px solid var(--border-color); margin-bottom: 20px;">
+				<form action="/letter/ready" method="POST">
+					<input type="hidden" name="id" value="{{ .Letter.ID }}">
+					<button type="submit" style="{{ if .Letter.CurrentUserReady }}background: transparent; border: 1px solid var(--border-color); color: var(--text-muted);{{ end }}">
+						{{ if .Letter.CurrentUserReady }}Un-Ready (Wait){{ else }}I'm Ready to Open!{{ end }}
+					</button>
+				</form>
+			</div>
+			
+			<!-- STATE 2: FULLY UNLOCKED LETTER & THREAD -->
+			{{ else if .Letter.IsUnlocked }}
+			
+			<div class="tab-content" style="background: #1f1c19; border: 1px solid var(--border-color); padding: 30px; border-radius: 24px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.2);">
+				
+				<!-- Main Letter Header -->
+				<div style="display: flex; align-items: center; gap: 14px; margin-bottom: 8px;">
+					<span style="font-size: 36px;">{{ if .Letter.Emoji }}{{ .Letter.Emoji }}{{ else }}💌{{ end }}</span>
+					<h2 style="font-size: 24px; margin: 0; color: var(--text-main);">{{ .Letter.Title }}</h2>
+				</div>
+				
+				<p style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; padding-left: 50px;">
+					Written on {{ .Letter.CreatedAt.Format "January 02, 2006" }}
+				</p>
 
-                <!-- Letter Body Content -->
-                <div style="font-size: 16px; line-height: 1.7; color: var(--text-main); white-space: pre-wrap; word-break: break-word;">
-                    {{ .Letter.Content }}
-                </div>
-            </div>
-        </div>
+				<hr style="border: none; border-top: 1px solid var(--border-color); margin-bottom: 20px;">
 
-        <div style="text-align: center; padding-top: 20px; color: var(--text-muted); font-size: 12px;">
-            keep. 🌻
-        </div>
-    </div>
+				<!-- Photo (if exists) -->
+				{{ if .Letter.ImagePath }}
+					<img src="{{ .Letter.ImagePath }}" style="width: 100%; border-radius: 12px; margin-bottom: 20px; object-fit: cover; border: 1px solid var(--border-color);">
+				{{ end }}
+
+				<!-- Smoothed Main Content -->
+				<div class="prose">{{ .Letter.Content }}</div>
+				
+				<!-- THREAD (Replies) -->
+				{{ if .Letter.Replies }}
+					<div style="margin-top: 40px; border-top: 1px dashed var(--border-color); padding-top: 20px;">
+						<span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px;">Conversation</span>
+						{{ range .Letter.Replies }}
+							<div class="reply-card">
+								<div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
+									{{ if .IsSender }}You{{ else }}Partner{{ end }} replied • {{ .CreatedAt.Format "Jan 02 15:04" }}
+								</div>
+								{{ if .ImagePath }}
+									<img src="{{ .ImagePath }}" style="width: 100%; max-width: 200px; border-radius: 8px; margin-bottom: 15px;">
+								{{ end }}
+								<div class="prose" style="font-size: 14px;">{{ .Content }}</div>
+							</div>
+						{{ end }}
+					</div>
+				{{ end }}
+
+				<!-- REPLY FORM -->
+				<div style="margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+					<form action="/letter/reply" method="POST" enctype="multipart/form-data">
+						<input type="hidden" name="parent_id" value="{{ .Letter.ID }}">
+						<textarea name="content" placeholder="Reply to this..." required style="min-height: 80px; margin-bottom: 10px; width: 100%; box-sizing: border-box;"></textarea>
+						
+						<div style="display: flex; gap: 10px; align-items: center;">
+							<input type="file" name="image" accept="image/*" style="padding: 10px; font-size: 12px; background: transparent; border: 1px dashed var(--border-color); width: 50%;">
+							<button type="submit" style="margin-top: 0; width: 50%;">Reply 💬</button>
+						</div>
+					</form>
+				</div>
+
+			</div>
+			
+			<!-- STATE 3: STILL LOCKED (DATE OR RANDOM) -->
+			{{ else }}
+			<div class="tab-content" style="background: #1f1c19; border: 1px solid var(--border-color); padding: 40px 30px; border-radius: 24px; text-align: center;">
+				<span style="font-size: 40px; display: block; margin-bottom: 15px;">🔒</span>
+				<h2 style="font-size: 20px; color: var(--text-main); margin-bottom: 10px;">No peeking!</h2>
+				<p style="color: var(--text-muted); font-size: 14px;">This letter is sealed.</p>
+			</div>
+			{{ end }}
+
+		</div>
+
+		<div style="text-align: center; padding-top: 20px; color: var(--text-muted); font-size: 12px;">
+			keep. 🌻
+		</div>
+	</div>
 </body>
 </html>

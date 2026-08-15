@@ -35,8 +35,11 @@ func main() {
 	http.HandleFunc("/partner/remove", HandleRemovePartner)
 	http.HandleFunc("/letters/write", HandleWriteLetter)
 	http.HandleFunc("/letter/view", HandleViewLetter)
+	http.HandleFunc("/letter/ready", HandleReadyLetter)
+	http.HandleFunc("/letter/reply", HandleReplyLetter)
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
 
 	serverAddress := ":" + port
 	fmt.Printf("Server running at http://localhost%s 🌻\n", serverAddress)

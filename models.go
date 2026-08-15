@@ -18,20 +18,23 @@ type PartnershipInfo struct {
 }
 
 type Letter struct {
-	ID            int
-	SenderID      int
-	ReceiverID    int
-	Title         string
-	Content       string
-	Emoji         string
-	UnlockType    string
-	UnlockAt      *time.Time
-	SenderReady   bool
-	ReceiverReady bool
-	IsRead        bool
-	CreatedAt     time.Time
-
-	// Computed fields just for the UI
-	IsUnlocked bool
-	IsSender   bool
+	ID               int
+	SenderID         int
+	ReceiverID       int
+	Title            string
+	Content          string
+	Emoji            string
+	UnlockType       string
+	UnlockAt         *time.Time
+	SenderReady      bool
+	ReceiverReady    bool
+	IsRead           bool
+	CreatedAt        time.Time
+	ParentID         *int
+	ImagePath        string
+	IsUnlocked       bool
+	IsSender         bool
+	Replies          []Letter
+	CurrentUserReady bool
+	PartnerReady     bool
 }
