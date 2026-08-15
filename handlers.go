@@ -7,7 +7,9 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -111,6 +113,44 @@ func HandleHome(w http.ResponseWriter, r *http.Request) {
 	}
 
 	renderTemplate(w, "home.html", data)
+}
+
+func HandleUpload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.NotFound(w, r)
+		return
+	}
+
+	cookie, err := r.Cookie("keep_session")
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	username, exists := sessions[cookie.Value]
+	if !exists {
+		http.NotFound(w, r)
+		return
+	}
+	user, err := GetUserByUsername(username)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	filename := strings.TrimPrefix(r.URL.Path, "/uploads/")
+	if filename == "" || filepath.Base(filename) != filename {
+		http.NotFound(w, r)
+		return
+	}
+
+	allowed, err := CanUserAccessUpload(r.URL.Path, user.ID)
+	if err != nil || !allowed {
+		http.NotFound(w, r)
+		return
+	}
+
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	http.ServeFile(w, r, filepath.Join("uploads", filename))
 }
 
 func HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {

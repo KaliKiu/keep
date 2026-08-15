@@ -117,6 +117,66 @@ func GetUserByID(id int) (User, error) {
 	return u, err
 }
 
+func CanUserAccessUpload(imagePath string, userID int) (bool, error) {
+	if imagePath == "" || userID == 0 {
+		return false, nil
+	}
+
+	var profileOwnerID int
+	err := db.QueryRow("SELECT id FROM users WHERE pfp_path = ?", imagePath).Scan(&profileOwnerID)
+	if err == nil {
+		if profileOwnerID == userID {
+			return true, nil
+		}
+
+		var linked bool
+		err = db.QueryRow(`
+			SELECT EXISTS(
+				SELECT 1 FROM partnerships
+				WHERE (user1_id = ? AND user2_id = ?)
+				   OR (user1_id = ? AND user2_id = ?)
+			)`, userID, profileOwnerID, profileOwnerID, userID).Scan(&linked)
+		return linked, err
+	}
+	if err != sql.ErrNoRows {
+		return false, err
+	}
+
+	var senderID, receiverID int
+	var unlockType string
+	var unlockAt sql.NullTime
+	var senderReady, receiverReady bool
+	err = db.QueryRow(`
+		SELECT root.sender_id, root.receiver_id, root.unlock_type, root.unlock_at,
+		       root.sender_ready, root.receiver_ready
+		FROM letters asset
+		JOIN letters root ON root.id = COALESCE(asset.parent_id, asset.id)
+		WHERE asset.image_path = ? AND asset.image_path != ''
+		LIMIT 1`, imagePath).Scan(
+		&senderID, &receiverID, &unlockType, &unlockAt, &senderReady, &receiverReady,
+	)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if userID != senderID && userID != receiverID {
+		return false, nil
+	}
+
+	switch unlockType {
+	case "instant":
+		return true, nil
+	case "date", "random":
+		return unlockAt.Valid && time.Now().After(unlockAt.Time), nil
+	case "mutual_ready":
+		return senderReady && receiverReady, nil
+	default:
+		return false, nil
+	}
+}
+
 func UpdateUserProfile(userID int, bio, status, pfpPath string) error {
 	if pfpPath != "" {
 		_, err := db.Exec("UPDATE users SET bio = ?, status = ?, pfp_path = ? WHERE id = ?", bio, status, pfpPath, userID)
