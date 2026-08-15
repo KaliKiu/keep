@@ -39,7 +39,7 @@ func main() {
 	http.HandleFunc("/letter/reply", HandleReplyLetter)
 	http.HandleFunc("/profile/update", HandleUpdateProfile)
 
-	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {})
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	http.HandleFunc("/uploads/", func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("keep_session")
