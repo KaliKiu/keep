@@ -20,10 +20,10 @@ func CreateLetter(senderID, receiverID int, title, content, emoji, unlockType st
 
 func GetVaultLetters(userID int) ([]Letter, error) {
 	query := `
-	SELECT id, sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, sender_ready, receiver_ready, is_read, created_at, read_at, image_path, latest_reply_user_name, latest_reply_read
-	FROM letters 
-	WHERE (sender_id = ? OR receiver_id = ?) AND parent_id IS NULL
-	ORDER BY created_at DESC`
+    SELECT id, sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, sender_ready, receiver_ready, is_read, created_at, read_at, image_path, COALESCE(latest_reply_user_name, ''), latest_reply_read
+    FROM letters 
+    WHERE (sender_id = ? OR receiver_id = ?) AND parent_id IS NULL
+    ORDER BY created_at DESC`
 
 	rows, err := db.Query(query, userID, userID)
 	if err != nil {
