@@ -9,3 +9,11 @@ func (l Letter) HistoryRxSort(username string) bool {
 func (l Letter) HistoryTxSort(username string) bool {
 	return l.IsSender && !l.InboxLetterSort(username)
 }
+func (u User) HasUnreadInbox(letters []Letter) bool {
+	for _, l := range letters {
+		if l.InboxLetterSort(u.Username) && l.IsUnlocked {
+			return true
+		}
+	}
+	return false
+}

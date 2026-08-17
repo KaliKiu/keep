@@ -30,7 +30,9 @@
 
 		<!-- SUB NAVIGATION TABS -->
 		<div class="nav-tabs">
-			<a href="/?tab=inbox" class="tab-item {{ if eq .Tab "inbox" }}active{{ end }}">Inbox</a>
+			<a href="/?tab=inbox" class="tab-item {{ if eq .Tab "inbox" }}active{{ end }}">
+				Inbox {{ if .User.HasUnreadInbox .Letters }}<span class="nav-dot"></span>{{ end }}
+			</a>
 			<a href="/?tab=history_rx" class="tab-item {{ if eq .Tab "history_rx" }}active{{ end }}">Received</a>
 			<a href="/?tab=history_tx" class="tab-item {{ if eq .Tab "history_tx" }}active{{ end }}">Sent</a>
 			<a href="/?tab=write" class="tab-item {{ if eq .Tab "write" }}active{{ end }}">Write</a>
