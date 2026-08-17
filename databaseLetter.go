@@ -20,7 +20,7 @@ func CreateLetter(senderID, receiverID int, title, content, emoji, unlockType st
 
 func GetVaultLetters(userID int) ([]Letter, error) {
 	query := `
-	SELECT id, sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, sender_ready, receiver_ready, is_read, created_at, read_at, image_path
+	SELECT id, sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, sender_ready, receiver_ready, is_read, created_at, read_at, image_path, latest_reply_user_name, latest_reply_read
 	FROM letters 
 	WHERE (sender_id = ? OR receiver_id = ?) AND parent_id IS NULL
 	ORDER BY created_at DESC`
@@ -35,7 +35,7 @@ func GetVaultLetters(userID int) ([]Letter, error) {
 	for rows.Next() {
 		var l Letter
 		var unlockAt, readAt sql.NullTime
-		err := rows.Scan(&l.ID, &l.SenderID, &l.ReceiverID, &l.Title, &l.Content, &l.Emoji, &l.UnlockType, &unlockAt, &l.SenderReady, &l.ReceiverReady, &l.IsRead, &l.CreatedAt, &readAt, &l.ImagePath)
+		err := rows.Scan(&l.ID, &l.SenderID, &l.ReceiverID, &l.Title, &l.Content, &l.Emoji, &l.UnlockType, &unlockAt, &l.SenderReady, &l.ReceiverReady, &l.IsRead, &l.CreatedAt, &readAt, &l.ImagePath, &l.LatestReplyUsername, &l.LatestReplyRead)
 		if err != nil {
 			return nil, err
 		}
@@ -67,14 +67,17 @@ func GetVaultLetters(userID int) ([]Letter, error) {
 func GetLetterByID(letterID, userID int) (Letter, error) {
 	var l Letter
 	var unlockAt, readAt sql.NullTime
+
+	// FIX: Added the 2 new columns so it knows who replied!
 	query := `
-	SELECT id, sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, sender_ready, receiver_ready, is_read, created_at, read_at, image_path
-	FROM letters 
-	WHERE id = ? AND (sender_id = ? OR receiver_id = ?)`
+    SELECT id, sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, sender_ready, receiver_ready, is_read, created_at, read_at, image_path, COALESCE(latest_reply_user_name, ''), latest_reply_read
+    FROM letters 
+    WHERE id = ? AND (sender_id = ? OR receiver_id = ?)`
 
 	err := db.QueryRow(query, letterID, userID, userID).Scan(
 		&l.ID, &l.SenderID, &l.ReceiverID, &l.Title, &l.Content, &l.Emoji,
 		&l.UnlockType, &unlockAt, &l.SenderReady, &l.ReceiverReady, &l.IsRead, &l.CreatedAt, &readAt, &l.ImagePath,
+		&l.LatestReplyUsername, &l.LatestReplyRead, // <-- CAUGHT THEM HERE
 	)
 	if err != nil {
 		return l, err
@@ -134,6 +137,17 @@ func ToggleReadyStatus(letterID, userID int) error {
 	} else {
 		_, err = db.Exec("UPDATE letters SET receiver_ready = NOT receiver_ready WHERE id = ?", letterID)
 	}
+	return err
+}
+
+func UpdateParentWithReply(parentID int, replyUsername string) error {
+
+	_, err := db.Exec(`
+        UPDATE letters 
+        SET latest_reply_user_name = ?, latest_reply_read = 0 
+        WHERE id = ?`,
+		replyUsername, parentID,
+	)
 	return err
 }
 

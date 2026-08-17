@@ -152,5 +152,6 @@ func HandleReplyLetter(w http.ResponseWriter, r *http.Request) {
 	}
 
 	CreateLetter(user.ID, partnerInfo.PartnerID, "Reply", content, emoji, "instant", nil, &parentID, imagePath, user.Username)
+	UpdateParentWithReply(parentID, user.Username)
 	http.Redirect(w, r, "/letter/view?id="+r.FormValue("parent_id"), http.StatusSeeOther)
 }

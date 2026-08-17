@@ -37,14 +37,14 @@
 			<a href="/?tab=profile" class="tab-item {{ if eq .Tab "profile" }}active{{ end }}">Profile</a>
 		</div>
 
-		<!-- SMOOTH ANIMATION WRAPPER -->
+		<!-- SMOOTH ANIMATION WRAPPER -->   
 		<div class="tab-content">
 			
 			<!-- TAB 1: INBOX -->
 			{{ if eq .Tab "inbox" }}
 				{{ $hasInbox := false }}
 				{{ range .Letters }}
-					{{ if or (and (not .IsRead) (not .IsSender)) (and (ne .LatestReplyUsername $.User.Username) (not .LatestReplyRead)) }}
+					{{ if or (and (not .IsRead) (not .IsSender)) (and (ne .LatestReplyUsername "") (ne .LatestReplyUsername $.User.Username) (not .LatestReplyRead)) }}
 						{{ $hasInbox = true }}
 						<a {{ if or .IsUnlocked (eq .UnlockType "mutual_ready") }}href="/letter/view?id={{ .ID }}"{{ end }} 
 						   class="letter-card" 
