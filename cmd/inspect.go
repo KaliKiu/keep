@@ -17,7 +17,7 @@ func main() {
 	defer db.Close()
 
 	fmt.Println("========================================")
-	fmt.Println("       KEEP. DATABASE INSPECTOR 🌻      ")
+	fmt.Println("        KEEP. DATABASE INSPECTOR 🌻       ")
 	fmt.Println("========================================")
 
 	// 1. INSPECT USERS
@@ -46,12 +46,13 @@ func main() {
 	}
 	fmt.Printf("Total registered accounts: %d\n", userCount)
 
-	// 2. INSPECT LETTERS & REPLIES
+	// 2. INSPECT LETTERS & REPLIES (Updated with new reply columns)
 	letterRows, err := db.Query(`
-		SELECT id, sender_id, receiver_id, title, content, emoji, 
-		       unlock_type, unlock_at, sender_ready, receiver_ready, 
-		       is_read, created_at, read_at, parent_id, image_path 
-		FROM letters`)
+        SELECT id, sender_id, receiver_id, title, content, emoji, 
+               unlock_type, unlock_at, sender_ready, receiver_ready, 
+               is_read, created_at, read_at, parent_id, image_path,
+               COALESCE(latest_reply_user_name, 'NULL/EMPTY'), latest_reply_read
+        FROM letters`)
 	if err != nil {
 		log.Fatal("Failed to query letters:", err)
 	}
@@ -61,8 +62,8 @@ func main() {
 	letterCount := 0
 	for letterRows.Next() {
 		var id, senderID, receiverID int
-		var title, content, emoji, unlockType, imagePath, createdAt string
-		var senderReady, receiverReady, isRead bool
+		var title, content, emoji, unlockType, imagePath, createdAt, latestReplyUser string
+		var senderReady, receiverReady, isRead, latestReplyRead bool
 		var unlockAt, readAt sql.NullTime
 		var parentID sql.NullInt64
 
@@ -70,6 +71,7 @@ func main() {
 			&id, &senderID, &receiverID, &title, &content, &emoji,
 			&unlockType, &unlockAt, &senderReady, &receiverReady,
 			&isRead, &createdAt, &readAt, &parentID, &imagePath,
+			&latestReplyUser, &latestReplyRead,
 		)
 		if err != nil {
 			log.Println("Error scanning letter:", err)
@@ -77,7 +79,7 @@ func main() {
 		}
 
 		fmt.Printf("Letter ID:  %d %s (Title: %s)\n", id, emoji, title)
-		fmt.Printf("From ID:    %d  --->  To ID: %d\n", senderID, receiverID)
+		fmt.Printf("From ID:    %d   --->   To ID: %d\n", senderID, receiverID)
 
 		if parentID.Valid {
 			fmt.Printf("Type:       💬 Reply to Root Letter ID #%d\n", parentID.Int64)
@@ -98,6 +100,10 @@ func main() {
 		if imagePath != "" {
 			fmt.Printf("Attachment: %s\n", imagePath)
 		}
+
+		// NEW REPLY TRACKING FIELDS
+		fmt.Printf("Latest Reply User: %s | Reply Read: %t\n", latestReplyUser, latestReplyRead)
+
 		fmt.Println("----------------------------------------")
 		letterCount++
 	}
