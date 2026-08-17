@@ -114,17 +114,6 @@ h2 {
     display: none;
 }
 
-.nav-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background-color: var(--accent-yellow);
-    border-radius: 50%;
-    margin-left: 6px;
-    vertical-align: middle;
-    box-shadow: 0 0 8px var(--accent-yellow);
-}
-
 .tab-item {
     text-decoration: none;
     color: var(--text-muted);
@@ -288,4 +277,15 @@ button:active {
 /* --- MICRO-INTERACTIONS --- */
 a, button, select, input {
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: var(--accent-yellow);
+    border-radius: 50%;
+    margin-left: 6px;
+    vertical-align: middle;
+    box-shadow: 0 0 8px var(--accent-yellow);
 }
