@@ -55,6 +55,8 @@ func InitDB(dbPath string) {
 		read_at DATETIME DEFAULT NULL,
 		parent_id INTEGER DEFAULT NULL,
 		image_path TEXT DEFAULT '',
+		latest_reply_user_name TEXT DEFAULT NULL,
+		latest_reply_read BOOLEAN DEFAULT 0,
 		FOREIGN KEY(sender_id) REFERENCES users(id),
 		FOREIGN KEY(receiver_id) REFERENCES users(id),
 		FOREIGN KEY(parent_id) REFERENCES letters(id)

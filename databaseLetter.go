@@ -7,13 +7,13 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func CreateLetter(senderID, receiverID int, title, content, emoji, unlockType string, unlockAt *time.Time, parentID *int, imagePath string) error {
+func CreateLetter(senderID, receiverID int, title, content, emoji, unlockType string, unlockAt *time.Time, parentID *int, imagePath string, latestReplyUsername string) error {
 	if emoji == "" {
 		emoji = "💌"
 	}
 	_, err := db.Exec(
-		"INSERT INTO letters (sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, parent_id, image_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		senderID, receiverID, title, content, emoji, unlockType, unlockAt, parentID, imagePath,
+		"INSERT INTO letters (sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, parent_id, image_path, latest_reply_user_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		senderID, receiverID, title, content, emoji, unlockType, unlockAt, parentID, imagePath, latestReplyUsername,
 	)
 	return err
 }
@@ -140,5 +140,10 @@ func ToggleReadyStatus(letterID, userID int) error {
 func MarkLetterAsRead(letterID int) error {
 	// Captures exactly when they opened it!
 	_, err := db.Exec("UPDATE letters SET is_read = 1, read_at = ? WHERE id = ?", time.Now(), letterID)
+	return err
+}
+
+func MarkReplyLetterAsRead(letterID int) error {
+	_, err := db.Exec("UPDATE letters SET latest_reply_read = 1 WHERE id = ?", letterID)
 	return err
 }

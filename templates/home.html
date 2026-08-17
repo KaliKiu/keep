@@ -44,7 +44,7 @@
 			{{ if eq .Tab "inbox" }}
 				{{ $hasInbox := false }}
 				{{ range .Letters }}
-					{{ if and (not .IsSender) (not .IsRead) }}
+					{{ if or (and (not .IsRead) (not .IsSender)) (and (ne .LatestReplyUsername $.User.Username) (not .LatestReplyRead)) }}
 						{{ $hasInbox = true }}
 						<a {{ if or .IsUnlocked (eq .UnlockType "mutual_ready") }}href="/letter/view?id={{ .ID }}"{{ end }} 
 						   class="letter-card" 

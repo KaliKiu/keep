@@ -65,7 +65,7 @@ func HandleWriteLetter(w http.ResponseWriter, r *http.Request) {
 		imagePath = "/uploads/" + filename
 	}
 
-	CreateLetter(user.ID, partnerInfo.PartnerID, title, content, emoji, unlockType, unlockAt, nil, imagePath)
+	CreateLetter(user.ID, partnerInfo.PartnerID, title, content, emoji, unlockType, unlockAt, nil, imagePath, "")
 	http.Redirect(w, r, "/?tab=history_tx", http.StatusSeeOther)
 }
 
@@ -99,6 +99,9 @@ func HandleViewLetter(w http.ResponseWriter, r *http.Request) {
 	// Trigger read receipt the moment they open it!
 	if letter.IsUnlocked && !letter.IsSender && !letter.IsRead {
 		MarkLetterAsRead(letter.ID)
+	}
+	if letter.LatestReplyUsername != user.Username && !letter.LatestReplyRead {
+		MarkReplyLetterAsRead(letter.ID)
 	}
 
 	data := map[string]interface{}{
@@ -148,6 +151,6 @@ func HandleReplyLetter(w http.ResponseWriter, r *http.Request) {
 		imagePath = "/uploads/" + filename
 	}
 
-	CreateLetter(user.ID, partnerInfo.PartnerID, "Reply", content, emoji, "instant", nil, &parentID, imagePath)
+	CreateLetter(user.ID, partnerInfo.PartnerID, "Reply", content, emoji, "instant", nil, &parentID, imagePath, user.Username)
 	http.Redirect(w, r, "/letter/view?id="+r.FormValue("parent_id"), http.StatusSeeOther)
 }

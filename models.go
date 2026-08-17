@@ -38,9 +38,11 @@ type Letter struct {
 	ImagePath     string
 
 	// Computed fields just for the UI
-	IsUnlocked       bool
-	IsSender         bool
-	Replies          []Letter // For threads
-	CurrentUserReady bool     // Mutual ready UI
-	PartnerReady     bool     // Mutual ready UI
+	IsUnlocked          bool
+	IsSender            bool
+	Replies             []Letter // For threads
+	CurrentUserReady    bool     // Mutual ready UI
+	PartnerReady        bool     // Mutual ready UI
+	LatestReplyUsername string
+	LatestReplyRead     bool
 }
