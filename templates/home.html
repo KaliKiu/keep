@@ -68,7 +68,7 @@
 								{{ else }}
 									{{ if eq .UnlockType "date" }}
 										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">⏳ Time-Locked</span>
-										<span>Unlocks on {{ .UnlockAt.Format "Jan 02" }}</span>
+										<span>Unlocks on <span class="local-date" data-time="{{ .UnlockAt.Format "2006-01-02T15:04:05" }}Z"></span></span>
 									{{ else if eq .UnlockType "random" }}
 										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">🎲 Random Time</span>
 										<span>Will drop as a surprise</span>
@@ -101,7 +101,7 @@
 								<span style="font-size: 18px; opacity: 0.6;">📖</span>
 							</div>
 							<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
-								<span style="color: var(--text-main);">Read at {{ .ReadAt.Format "Jan 02, 15:04" }}</span> • Sent {{ .CreatedAt.Format "Jan 02, 2006" }}
+								<span style="color: var(--text-main);">Read at <span class="local-time" data-time="{{ .ReadAt.Format "2006-01-02T15:04:05" }}Z"></span></span> • Sent <span class="local-date" data-time="{{ .CreatedAt.Format "2006-01-02T15:04:05" }}Z"></span>
 							</div>
 						</a>
 					{{ end }}
@@ -133,9 +133,10 @@
 							<div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; padding-left: 34px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
 								{{ if .IsUnlocked }}
 									{{ if .IsRead }}
-										<span style="color: var(--text-muted);">📖 Read at {{ .ReadAt.Format "Jan 02, 15:04" }}</span>
+										<span style="color: var(--text-muted);">📖 Read at <span class="local-time" data-time="{{ .ReadAt.Format "2006-01-02T15:04:05" }}Z"></span></span>
+
 									{{ else }}
-										<span style="color: var(--accent-yellow); font-weight: 600;">📬 Sent {{ .CreatedAt.Format "Jan 02, 15:04" }} (Unread)</span>
+										<span style="color: var(--accent-yellow); font-weight: 600;">📬 Sent <span class="local-time" data-time="{{ .CreatedAt.Format "2006-01-02T15:04:05" }}Z"></span> (Unread)</span>
 									{{ end }}
 								{{ else }}
 									{{ if eq .UnlockType "date" }}
@@ -203,6 +204,8 @@
 						<div class="input-group" id="datePickerGroup" style="display: none;">
 							<label>Unlock Date</label>
 							<input type="datetime-local" name="unlock_date">
+							<!-- ADD THIS LINE: -->
+							<input type="hidden" name="tz_offset" id="tz_offset">
 						</div>
 						<div class="input-group" id="randomPickerGroup" style="display: none;">
 							<label>Unlock Randomly Within...</label>
@@ -357,6 +360,26 @@
 		}
 		document.querySelectorAll('input, textarea, button, select').forEach(el => {
 			if(el.id !== 'audio-toggle') el.addEventListener('focus', playClick);
+		});
+	</script>
+	<script>
+		let tzInput = document.getElementById("tz_offset");
+		if(tzInput) {
+			tzInput.value = new Date().getTimezoneOffset();
+		}
+
+		document.querySelectorAll('.local-time').forEach(el => {
+			let d = new Date(el.getAttribute('data-time'));
+			if (!isNaN(d)) {
+				el.innerText = d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+			}
+		});
+
+		document.querySelectorAll('.local-date').forEach(el => {
+			let d = new Date(el.getAttribute('data-time'));
+			if (!isNaN(d)) {
+				el.innerText = d.toLocaleString(undefined, { month: 'short', day: 'numeric' });
+			}
 		});
 	</script>
 </body>

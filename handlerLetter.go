@@ -35,6 +35,8 @@ func HandleWriteLetter(w http.ResponseWriter, r *http.Request) {
 		dateStr := r.FormValue("unlock_date")
 		parsedTime, err := time.Parse("2006-01-02T15:04", dateStr)
 		if err == nil {
+			offset, _ := strconv.Atoi(r.FormValue("tz_offset"))
+			parsedTime = parsedTime.Add(time.Duration(offset) * time.Minute)
 			unlockAt = &parsedTime
 		}
 	} else if unlockType == "random" {
@@ -44,7 +46,7 @@ func HandleWriteLetter(w http.ResponseWriter, r *http.Request) {
 			days = 7
 		}
 		randomSeconds := rand.Int63n(int64(days * 24 * 60 * 60))
-		t := time.Now().Add(time.Duration(randomSeconds) * time.Second)
+		t := time.Now().UTC().Add(time.Duration(randomSeconds) * time.Second)
 		unlockAt = &t
 	}
 

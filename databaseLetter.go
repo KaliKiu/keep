@@ -51,7 +51,7 @@ func GetVaultLetters(userID int) ([]Letter, error) {
 		if l.UnlockType == "instant" {
 			l.IsUnlocked = true
 		} else if (l.UnlockType == "date" || l.UnlockType == "random") && l.UnlockAt != nil {
-			if time.Now().After(*l.UnlockAt) {
+			if time.Now().UTC().After(*l.UnlockAt) {
 				l.IsUnlocked = true
 			}
 		} else if l.UnlockType == "mutual_ready" {
@@ -103,7 +103,7 @@ func GetLetterByID(letterID, userID int) (Letter, error) {
 	if l.UnlockType == "instant" {
 		l.IsUnlocked = true
 	} else if (l.UnlockType == "date" || l.UnlockType == "random") && l.UnlockAt != nil {
-		if time.Now().After(*l.UnlockAt) {
+		if time.Now().UTC().After(*l.UnlockAt) {
 			l.IsUnlocked = true
 		}
 	} else if l.UnlockType == "mutual_ready" {
@@ -153,7 +153,7 @@ func UpdateParentWithReply(parentID int, replyUsername string) error {
 
 func MarkLetterAsRead(letterID int) error {
 	// Captures exactly when they opened it!
-	_, err := db.Exec("UPDATE letters SET is_read = 1, read_at = ? WHERE id = ?", time.Now(), letterID)
+	_, err := db.Exec("UPDATE letters SET is_read = 1, read_at = ? WHERE id = ?", time.Now().UTC(), letterID)
 	return err
 }
 
