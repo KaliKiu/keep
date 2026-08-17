@@ -25,7 +25,7 @@ func main() {
 		dbPath = "keep.db"
 	}
 
-	src.InitDB(dbPath)
+	InitDB(dbPath)
 
 	http.HandleFunc("/", HandleHome)
 	http.HandleFunc("/login", HandleLogin)
