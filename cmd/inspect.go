@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	_ "modernc.org/sqlite"
 )
@@ -46,7 +47,7 @@ func main() {
 	}
 	fmt.Printf("Total registered accounts: %d\n", userCount)
 
-	// 2. INSPECT LETTERS & REPLIES (Updated with new reply columns)
+	// 2. INSPECT LETTERS & REPLIES
 	letterRows, err := db.Query(`
         SELECT id, sender_id, receiver_id, title, content, emoji, 
                unlock_type, unlock_at, sender_ready, receiver_ready, 
@@ -78,6 +79,20 @@ func main() {
 			continue
 		}
 
+		// Calculate IsUnlocked identically to GetVaultLetters
+		isUnlocked := false
+		if unlockType == "instant" {
+			isUnlocked = true
+		} else if (unlockType == "date" || unlockType == "random") && unlockAt.Valid {
+			if time.Now().UTC().After(unlockAt.Time) {
+				isUnlocked = true
+			}
+		} else if unlockType == "mutual_ready" {
+			if senderReady && receiverReady {
+				isUnlocked = true
+			}
+		}
+
 		fmt.Printf("Letter ID:  %d %s (Title: %s)\n", id, emoji, title)
 		fmt.Printf("From ID:    %d   --->   To ID: %d\n", senderID, receiverID)
 
@@ -88,11 +103,11 @@ func main() {
 		}
 
 		fmt.Printf("Content:    %s\n", truncate(content, 50))
-		fmt.Printf("Seal Type:  %s | Read: %t\n", unlockType, isRead)
+		fmt.Printf("Seal Type:  %s | IsUnlocked: %t | Read: %t\n", unlockType, isUnlocked, isRead)
 		fmt.Printf("Created At: %s\n", createdAt)
 
 		if unlockAt.Valid {
-			fmt.Printf("Unlock At:  %s\n", unlockAt.Time.Format("Jan 02, 2006 15:04"))
+			fmt.Printf("Unlock At:  %s (UTC)\n", unlockAt.Time.Format("Jan 02, 2006 15:04"))
 		}
 		if readAt.Valid {
 			fmt.Printf("Read At:    %s\n", readAt.Time.Format("Jan 02, 2006 15:04"))
@@ -101,9 +116,7 @@ func main() {
 			fmt.Printf("Attachment: %s\n", imagePath)
 		}
 
-		// NEW REPLY TRACKING FIELDS
 		fmt.Printf("Latest Reply User: %s | Reply Read: %t\n", latestReplyUser, latestReplyRead)
-
 		fmt.Println("----------------------------------------")
 		letterCount++
 	}

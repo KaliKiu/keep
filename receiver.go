@@ -11,7 +11,7 @@ func (l Letter) HistoryTxSort(username string) bool {
 }
 func (u User) HasUnreadInbox(letters []Letter) bool {
 	for _, l := range letters {
-		if l.InboxLetterSort(u.Username) && l.IsUnlocked {
+		if l.InboxLetterSort(u.Username) {
 			return true
 		}
 	}
