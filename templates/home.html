@@ -44,7 +44,7 @@
 			{{ if eq .Tab "inbox" }}
 				{{ $hasInbox := false }}
 				{{ range .Letters }}
-					{{ if or (and (not .IsRead) (not .IsSender)) (and (ne .LatestReplyUsername "") (ne .LatestReplyUsername $.User.Username) (not .LatestReplyRead)) }}
+					{{if .InboxLetterSort $.User.Username }}
 						{{ $hasInbox = true }}
 						<a {{ if or .IsUnlocked (eq .UnlockType "mutual_ready") }}href="/letter/view?id={{ .ID }}"{{ end }} 
 						   class="letter-card" 
@@ -90,7 +90,7 @@
 			{{ if eq .Tab "history_rx" }}
 				{{ $hasHistoryRx := false }}
 				{{ range .Letters }}
-					{{ if and (and (not .IsSender) .IsRead) (or (.LatestReplyRead) (eq .LatestReplyUsername $.User.Username))}}
+					{{ if .HistoryRxSort $.User.Username }}
 						{{ $hasHistoryRx = true }}
 						<a href="/letter/view?id={{ .ID }}" class="letter-card">
 							<div style="display: flex; justify-content: space-between; align-items: center;">
@@ -115,7 +115,7 @@
 			{{ if eq .Tab "history_tx" }}
 				{{ $hasHistoryTx := false }}
 				{{ range .Letters }}
-					{{ if and (.IsSender) (or (.LatestReplyRead) (eq .LatestReplyUsername $.User.Username))}}
+					{{ if .HistoryTxSort $.User.Username }}
 						{{ $hasHistoryTx = true }}
 						<a {{ if or .IsUnlocked (eq .UnlockType "mutual_ready") }}href="/letter/view?id={{ .ID }}"{{ end }} 
 						   class="letter-card" 

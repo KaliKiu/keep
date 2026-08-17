@@ -69,6 +69,8 @@ func InitDB(dbPath string) {
 	db.Exec("ALTER TABLE letters ADD COLUMN parent_id INTEGER DEFAULT NULL")
 	db.Exec("ALTER TABLE letters ADD COLUMN image_path TEXT DEFAULT ''")
 	db.Exec("ALTER TABLE letters ADD COLUMN read_at DATETIME DEFAULT NULL")
+	db.Exec("ALTER TABLE letters ADD COLUMN latest_reply_user_name TEXT DEFAULT NULL")
+	db.Exec("ALTER TABLE letters ADD COLUMN latest_reply_read BOOLEAN DEFAULT 0")
 
 	db.Exec("ALTER TABLE users ADD COLUMN bio TEXT DEFAULT 'Just setting up my keep.'")
 	db.Exec("ALTER TABLE users ADD COLUMN status TEXT DEFAULT '🌻'")
