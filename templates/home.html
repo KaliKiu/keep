@@ -90,7 +90,7 @@
 			{{ if eq .Tab "history_rx" }}
 				{{ $hasHistoryRx := false }}
 				{{ range .Letters }}
-					{{ if and (not .IsSender) .IsRead }}
+					{{ if and (and (not .IsSender) .IsRead) (or (.LatestReplyRead) (eq .LatestReplyUsername $.User.Username))}}
 						{{ $hasHistoryRx = true }}
 						<a href="/letter/view?id={{ .ID }}" class="letter-card">
 							<div style="display: flex; justify-content: space-between; align-items: center;">
@@ -115,7 +115,7 @@
 			{{ if eq .Tab "history_tx" }}
 				{{ $hasHistoryTx := false }}
 				{{ range .Letters }}
-					{{ if .IsSender }}
+					{{ if and (.IsSender) (or (.LatestReplyRead) (eq .LatestReplyUsername $.User.Username))}}
 						{{ $hasHistoryTx = true }}
 						<a {{ if or .IsUnlocked (eq .UnlockType "mutual_ready") }}href="/letter/view?id={{ .ID }}"{{ end }} 
 						   class="letter-card" 
