@@ -49,11 +49,27 @@ func main() {
 
 	// 2. INSPECT LETTERS & REPLIES
 	letterRows, err := db.Query(`
-        SELECT id, sender_id, receiver_id, title, content, emoji, 
-               unlock_type, unlock_at, sender_ready, receiver_ready, 
-               is_read, created_at, read_at, parent_id, image_path,
-               COALESCE(latest_reply_user_name, 'NULL/EMPTY'), latest_reply_read
-        FROM letters`)
+	SELECT
+		id,
+		sender_id,
+		receiver_id,
+		COALESCE(request_id, 'NULL/EMPTY'),
+		title,
+		content,
+		emoji,
+		unlock_type,
+		unlock_at,
+		sender_ready,
+		receiver_ready,
+		is_read,
+		created_at,
+		read_at,
+		parent_id,
+		image_path,
+		COALESCE(latest_reply_user_name, 'NULL/EMPTY'),
+		latest_reply_read
+	FROM letters
+`)
 	if err != nil {
 		log.Fatal("Failed to query letters:", err)
 	}
@@ -63,13 +79,14 @@ func main() {
 	letterCount := 0
 	for letterRows.Next() {
 		var id, senderID, receiverID int
+		var requestID string
 		var title, content, emoji, unlockType, imagePath, createdAt, latestReplyUser string
 		var senderReady, receiverReady, isRead, latestReplyRead bool
 		var unlockAt, readAt sql.NullTime
 		var parentID sql.NullInt64
 
 		err := letterRows.Scan(
-			&id, &senderID, &receiverID, &title, &content, &emoji,
+			&id, &senderID, &receiverID, &requestID, &title, &content, &emoji,
 			&unlockType, &unlockAt, &senderReady, &receiverReady,
 			&isRead, &createdAt, &readAt, &parentID, &imagePath,
 			&latestReplyUser, &latestReplyRead,
@@ -95,6 +112,7 @@ func main() {
 
 		fmt.Printf("Letter ID:  %d %s (Title: %s)\n", id, emoji, title)
 		fmt.Printf("From ID:    %d   --->   To ID: %d\n", senderID, receiverID)
+		fmt.Printf("UniqueLetterID: %s\n", requestID)
 
 		if parentID.Valid {
 			fmt.Printf("Type:       💬 Reply to Root Letter ID #%d\n", parentID.Int64)
