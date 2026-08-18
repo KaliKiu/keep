@@ -43,6 +43,7 @@ func InitDB(dbPath string) {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		sender_id INTEGER,
 		receiver_id INTEGER,
+		request_id TEXT DEFAULT NULL,
 		title TEXT,
 		content TEXT,
 		emoji TEXT DEFAULT '💌',
@@ -57,6 +58,7 @@ func InitDB(dbPath string) {
 		image_path TEXT DEFAULT '',
 		latest_reply_user_name TEXT DEFAULT NULL,
 		latest_reply_read BOOLEAN DEFAULT 0,
+
 		FOREIGN KEY(sender_id) REFERENCES users(id),
 		FOREIGN KEY(receiver_id) REFERENCES users(id),
 		FOREIGN KEY(parent_id) REFERENCES letters(id)
@@ -71,8 +73,17 @@ func InitDB(dbPath string) {
 	db.Exec("ALTER TABLE letters ADD COLUMN read_at DATETIME DEFAULT NULL")
 	db.Exec("ALTER TABLE letters ADD COLUMN latest_reply_user_name TEXT DEFAULT NULL")
 	db.Exec("ALTER TABLE letters ADD COLUMN latest_reply_read BOOLEAN DEFAULT 0")
+	db.Exec("ALTER TABLE letters ADD COLUMN request_id TEXT DEFAULT NULL")
 
 	db.Exec("ALTER TABLE users ADD COLUMN bio TEXT DEFAULT 'Just setting up my keep.'")
 	db.Exec("ALTER TABLE users ADD COLUMN status TEXT DEFAULT '🌻'")
 	db.Exec("ALTER TABLE users ADD COLUMN pfp_path TEXT DEFAULT ''")
+
+	_, err = db.Exec(`
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_letters_sender_request
+		ON letters(sender_id, request_id)
+	`)
+	if err != nil {
+		log.Fatal("Failed creating request ID index:", err)
+	}
 }

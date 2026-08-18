@@ -110,13 +110,14 @@
 
 				<!-- REPLY FORM -->
 				<div style="margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px;">
-					<form action="/letter/reply" method="POST" enctype="multipart/form-data">
+					<form id="reply-form" action="/letter/reply" method="POST" enctype="multipart/form-data">
 						<input type="hidden" name="parent_id" value="{{ .Letter.ID }}">
+						<input type="hidden" name="request_id" id="reply-request-id">
 						<textarea name="content" placeholder="Reply to this..." required style="min-height: 80px; margin-bottom: 10px; width: 100%; box-sizing: border-box;"></textarea>
 						
 						<div style="display: flex; gap: 10px; align-items: center;">
 							<input type="file" name="image" accept="image/*" style="padding: 10px; font-size: 12px; background: transparent; border: 1px dashed var(--border-color); width: 50%;">
-							<button type="submit" style="margin-top: 0; width: 50%;">Reply 💬</button>
+							<button id="send-reply-btn" style="margin-top: 0; width: 50%;" type="submit">Reply 💬</button>
 						</div>
 					</form>
 				</div>
@@ -148,6 +149,28 @@
 			let d = new Date(el.getAttribute('data-time'));
 			if (!isNaN(d)) el.innerText = d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
 		});
+	</script>
+	<script>
+		const replyForm = document.getElementById("reply-form");
+
+		if (replyForm) {
+			const sendButton = document.getElementById("send-reply-btn");
+			const requestInput = document.getElementById("reply-request-id");
+			let sending = false;
+
+			requestInput.value = crypto.randomUUID();
+
+			replyForm.addEventListener("submit", function(e) {
+				if (sending) {
+					e.preventDefault();
+					return;
+				}
+
+				sending = true;
+				sendButton.disabled = true;
+				sendButton.textContent = "Sending...";
+			});
+		}
 	</script>
 </body>
 </html>

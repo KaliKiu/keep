@@ -24,6 +24,7 @@ type Letter struct {
 	ID            int
 	SenderID      int
 	ReceiverID    int
+	RequestID     string
 	Title         string
 	Content       string
 	Emoji         string
@@ -46,3 +47,5 @@ type Letter struct {
 	LatestReplyUsername string
 	LatestReplyRead     bool
 }
+
+//struct for each html data to be passed to the template

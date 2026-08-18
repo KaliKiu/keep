@@ -289,3 +289,9 @@ a, button, select, input {
     vertical-align: middle;
     box-shadow: 0 0 8px var(--accent-yellow);
 }
+
+button:disabled {
+    pointer-events: none;
+    opacity: 0.6;
+    cursor: wait;
+}

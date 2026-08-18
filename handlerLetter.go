@@ -26,6 +26,11 @@ func HandleWriteLetter(w http.ResponseWriter, r *http.Request) {
 	}
 
 	r.ParseMultipartForm(10 << 20)
+	requestID := r.FormValue("request_id")
+	if requestID == "" {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
 	title := r.FormValue("title")
 	content := r.FormValue("content")
 	unlockType := r.FormValue("unlock_type")
@@ -67,7 +72,7 @@ func HandleWriteLetter(w http.ResponseWriter, r *http.Request) {
 		imagePath = "/uploads/" + filename
 	}
 
-	CreateLetter(user.ID, partnerInfo.PartnerID, title, content, emoji, unlockType, unlockAt, nil, imagePath, "")
+	CreateLetter(user.ID, partnerInfo.PartnerID, requestID, title, content, emoji, unlockType, unlockAt, nil, imagePath, "")
 	http.Redirect(w, r, "/?tab=history_tx", http.StatusSeeOther)
 }
 
@@ -137,6 +142,11 @@ func HandleReplyLetter(w http.ResponseWriter, r *http.Request) {
 	partnerInfo, _ := GetPartnershipInfo(user.ID)
 
 	r.ParseMultipartForm(10 << 20)
+	requestID := r.FormValue("request_id")
+	if requestID == "" {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
 	parentID, _ := strconv.Atoi(r.FormValue("parent_id"))
 	content := r.FormValue("content")
 	emoji := "💬"
@@ -153,7 +163,7 @@ func HandleReplyLetter(w http.ResponseWriter, r *http.Request) {
 		imagePath = "/uploads/" + filename
 	}
 
-	CreateLetter(user.ID, partnerInfo.PartnerID, "Reply", content, emoji, "instant", nil, &parentID, imagePath, user.Username)
+	CreateLetter(user.ID, partnerInfo.PartnerID, requestID, "Reply", content, emoji, "instant", nil, &parentID, imagePath, user.Username)
 	UpdateParentWithReply(parentID, user.Username)
 	http.Redirect(w, r, "/letter/view?id="+r.FormValue("parent_id"), http.StatusSeeOther)
 }

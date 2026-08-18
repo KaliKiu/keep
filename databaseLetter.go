@@ -7,15 +7,27 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func CreateLetter(senderID, receiverID int, title, content, emoji, unlockType string, unlockAt *time.Time, parentID *int, imagePath string, latestReplyUsername string) error {
+func CreateLetter(senderID, receiverID int, requestID string, title, content, emoji, unlockType string, unlockAt *time.Time, parentID *int, imagePath, latestReplyUsername string) (bool, error) {
 	if emoji == "" {
 		emoji = "💌"
 	}
-	_, err := db.Exec(
-		"INSERT INTO letters (sender_id, receiver_id, title, content, emoji, unlock_type, unlock_at, parent_id, image_path, latest_reply_user_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		senderID, receiverID, title, content, emoji, unlockType, unlockAt, parentID, imagePath, latestReplyUsername,
-	)
-	return err
+
+	result, err := db.Exec(`
+		INSERT INTO letters (sender_id, receiver_id, request_id, title, content, emoji, unlock_type, unlock_at, parent_id, image_path, latest_reply_user_name)
+		VALUES (?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(sender_id, request_id) DO NOTHING
+	`, senderID, receiverID, requestID, title, content, emoji, unlockType, unlockAt, parentID, imagePath, latestReplyUsername)
+
+	if err != nil {
+		return false, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return rowsAffected == 1, nil
 }
 
 func GetVaultLetters(userID int) ([]Letter, error) {

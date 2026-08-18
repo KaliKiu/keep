@@ -166,7 +166,8 @@
 				{{ if not .Partner.HasPartner }}
 					<div class="empty-state">You need to link with a partner in the Profile tab before writing letters!</div>
 				{{ else }}
-					<form method="POST" action="/letters/write" enctype="multipart/form-data">
+					<form id="letter-form" method="POST" action="/letters/write" enctype="multipart/form-data">
+						<input type="hidden" name="request_id" id="letter-request-id">
 						<div class="input-group">
 							<label>Vibe / Emoji</label>
 							<select name="emoji">
@@ -218,7 +219,7 @@
 								<option value="30">The next month</option>
 							</select>
 						</div>
-						<button type="submit">Seal & Send 💌</button>
+						<button id="send-letter-btn" type="submit">Seal & Send 💌</button>
 					</form>
 				{{ end }}
 			{{ end }}
@@ -383,6 +384,30 @@
 				el.innerText = d.toLocaleString(undefined, { month: 'short', day: 'numeric' });
 			}
 		});
+	</script>
+	<script>
+		const letterForm = document.getElementById("letter-form");
+
+		if (letterForm) {
+			const sendButton = document.getElementById("send-letter-btn");
+			const requestInput = document.getElementById("letter-request-id");
+			let sending = false;
+
+			requestInput.value = crypto.randomUUID();
+
+			letterForm.addEventListener("submit", function (e) {
+				if (sending) {
+					e.preventDefault();
+					return;
+				}
+
+				sending = true;
+				sendButton.disabled = true;
+				sendButton.textContent = "Sending... 💌";
+				sendButton.style.opacity = "0.6";
+				sendButton.style.cursor = "wait";
+			});
+		}
 	</script>
 </body>
 </html>
