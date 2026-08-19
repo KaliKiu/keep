@@ -1,446 +1,446 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>{{T "home.title"}}</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="/static/style.css">
-	<link rel="icon" type="image/x-icon" href="static/sunflower.png">
-	<link rel="manifest" href="/static/manifest.json">
-	<style>
-		.pfp-circle {
-			width: 80px; height: 80px; border-radius: 50%;
-			object-fit: cover; border: 2px solid var(--accent-yellow);
-			background: #2e2a25; display: flex; align-items: center;
-			justify-content: center; font-size: 32px; margin: 0 auto 15px auto;
-		}
-		.status-bubble {
-			background: rgba(255, 200, 44, 0.15); color: var(--accent-yellow);
-			padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600;
-		}
-	</style>
+    <title>{{T "home.title"}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/x-icon" href="static/sunflower.png">
+    <link rel="manifest" href="/static/manifest.json">
+    <style>
+        .pfp-circle {
+            width: 80px; height: 80px; border-radius: 50%;
+            object-fit: cover; border: 2px solid var(--accent-yellow);
+            background: #2e2a25; display: flex; align-items: center;
+            justify-content: center; font-size: 32px; margin: 0 auto 15px auto;
+        }
+        .status-bubble {
+            background: rgba(255, 200, 44, 0.15); color: var(--accent-yellow);
+            padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600;
+        }
+    </style>
 </head>
 <body>
-	<div class="card">
-		<h2>{{T "home.title"}}</h2>
-		<p class="subtitle">{{T "home.subtitle"}} <b>{{ .User.Username }}</b></p>
+    <div class="card">
+        <h2>{{T "home.title"}}</h2>
+        <p class="subtitle">{{T "home.subtitle"}} <b>{{ .User.Username }}</b></p>
 
-		{{ if .Error }}
-			<div class="error" style="text-align: center; margin-bottom: 15px;">{{ .Error }}</div>
-		{{ end }}
+        {{ if .Error }}
+            <div class="error" style="text-align: center; margin-bottom: 15px;">{{ .Error }}</div>
+        {{ end }}
 
-		<!-- SUB NAVIGATION TABS -->
-		<div class="nav-tabs">
-			<a href="/?tab=inbox" class="tab-item {{ if eq .Tab "inbox" }}active{{ end }}">
-				{{T "nav.inbox"}}{{ if .User.HasUnreadInbox .Letters }}<span style="color:#ffc82c; font-size:14px; margin-left:5px; text-shadow:0 0 6px #ffc82c; vertical-align:middle;">●</span>{{ end }}
-			</a>
-			<a href="/?tab=history_rx" class="tab-item {{ if eq .Tab "history_rx" }}active{{ end }}"> {{T "nav.received"}} </a>
-			<a href="/?tab=history_tx" class="tab-item {{ if eq .Tab "history_tx" }}active{{ end }}"> {{T "nav.sent"}} </a>
-			<a href="/?tab=write" class="tab-item {{ if eq .Tab "write" }}active{{ end }}"> {{T "nav.write"}} </a>
-			<a href="/?tab=profile" class="tab-item {{ if eq .Tab "profile" }}active{{ end }}"> {{T "nav.profile"}} </a>
-		</div>
+        <!-- SUB NAVIGATION TABS -->
+        <div class="nav-tabs">
+            <a href="/?tab=inbox" class="tab-item {{ if eq .Tab "inbox" }}active{{ end }}">
+                {{T "nav.inbox"}}{{ if .User.HasUnreadInbox .Letters }}<span style="color:#ffc82c; font-size:14px; margin-left:5px; text-shadow:0 0 6px #ffc82c; vertical-align:middle;">●</span>{{ end }}
+            </a>
+            <a href="/?tab=history_rx" class="tab-item {{ if eq .Tab "history_rx" }}active{{ end }}"> {{T "nav.received"}} </a>
+            <a href="/?tab=history_tx" class="tab-item {{ if eq .Tab "history_tx" }}active{{ end }}"> {{T "nav.sent"}} </a>
+            <a href="/?tab=write" class="tab-item {{ if eq .Tab "write" }}active{{ end }}"> {{T "nav.write"}} </a>
+            <a href="/?tab=profile" class="tab-item {{ if eq .Tab "profile" }}active{{ end }}"> {{T "nav.profile"}} </a>
+        </div>
 
-		<!-- SMOOTH ANIMATION WRAPPER -->   
-		<div class="tab-content">
-			
-			<!-- TAB 1: INBOX -->
-			{{ if eq .Tab "inbox" }}
-				{{ $hasInbox := false }}
-				{{ range .Letters }}
-					{{if .InboxLetterSort $.User.Username }}
-						{{ $hasInbox = true }}
-						<a {{ if or .IsUnlocked (eq .UnlockType "mutual_ready") }}href="/letter/view?id={{ .ID }}"{{ end }} 
-						   class="letter-card" 
-						   style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.7; border-color: var(--border-color);{{ else }}border-color: #3b352e;{{ end }}">
-							
-							<div style="display: flex; justify-content: space-between; align-items: center;">
-								<span style="font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 12px;">
-									<span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
-									<span>
-										{{ .Title }} 
-										{{ if .IsUnlocked }}<span class="unread-dot"></span>{{ end }}
-									</span>
-								</span>
-								<span style="font-size: 18px;">{{ if .IsUnlocked }}💌{{ else }}🔒{{ end }}</span>
-							</div>
-							
-							<!-- ENHANCED UI BADGES -->
-							<div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; padding-left: 34px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-								{{ if .IsUnlocked }}
-									<span style="color: var(--accent-yellow); font-weight: 600;">{{T "inbox.unlocked-state"}}</span>
-								{{ else }}
-									{{ if eq .UnlockType "date" }}
-										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">{{T "inbox.unlocked-time-state"}}</span>
-										<span>{{T "inbox.unlocks-on"}} <span class="local-time" data-time="{{ .UnlockAt.Format "2006-01-02T15:04:05" }}Z"></span></span>
-									{{ else if eq .UnlockType "random" }}
-										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">{{T "inbox.unlocked-surprise-state"}}</span>
-										<span>{{T "inbox.unlocks-surprsie"}}</span>
-									{{ else if eq .UnlockType "mutual_ready" }}
-										<span style="background: rgba(255, 200, 44, 0.15); color: var(--accent-yellow); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">{{T "inbox.unlocked-mutual-state"}}</span>
-										<span>{{T "inbox.unlocks-mutual"}}</span>
-									{{ end }}
-								{{ end }}
-							</div>
-						</a>
-					{{ end }}
-				{{ end }}
-				{{ if not $hasInbox }}
-					<div class="empty-state">{{T "inbox.empty-state"}}</div>
-				{{ end }}
-			{{ end }}
+        <!-- SMOOTH ANIMATION WRAPPER -->   
+        <div class="tab-content">
+            
+            <!-- TAB 1: INBOX -->
+            {{ if eq .Tab "inbox" }}
+                {{ $hasInbox := false }}
+                {{ range .Letters }}
+                    {{if .InboxLetterSort $.User.Username }}
+                        {{ $hasInbox = true }}
+                        <a {{ if or .IsUnlocked (eq .UnlockType "mutual_ready") }}href="/letter/view?id={{ .ID }}"{{ end }} 
+                           class="letter-card" 
+                           style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.7; border-color: var(--border-color);{{ else }}border-color: #3b352e;{{ end }}">
+                           
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
+                                    <span>
+                                        {{ .Title }} 
+                                        {{ if .IsUnlocked }}<span class="unread-dot"></span>{{ end }}
+                                    </span>
+                                </span>
+                                <span style="font-size: 18px;">{{ if .IsUnlocked }}💌{{ else }}🔒{{ end }}</span>
+                            </div>
+                            
+                            <!-- ENHANCED UI BADGES -->
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; padding-left: 34px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                {{ if .IsUnlocked }}
+                                    <span style="color: var(--accent-yellow); font-weight: 600;">{{T "inbox.unlocked-state"}}</span>
+                                {{ else }}
+                                    {{ if eq .UnlockType "date" }}
+                                        <span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">{{T "inbox.unlocked-time-state"}}</span>
+                                        <span>{{T "inbox.unlocks-on"}} <span class="local-time" data-time="{{ .UnlockAt.Format "2006-01-02T15:04:05" }}Z"></span></span>
+                                    {{ else if eq .UnlockType "random" }}
+                                        <span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">{{T "inbox.unlocked-surprise-state"}}</span>
+                                        <span>{{T "inbox.unlocks-surprsie"}}</span>
+                                    {{ else if eq .UnlockType "mutual_ready" }}
+                                        <span style="background: rgba(255, 200, 44, 0.15); color: var(--accent-yellow); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">{{T "inbox.unlocked-mutual-state"}}</span>
+                                        <span>{{T "inbox.unlocks-mutual"}}</span>
+                                    {{ end }}
+                                {{ end }}
+                            </div>
+                        </a>
+                    {{ end }}
+                {{ end }}
+                {{ if not $hasInbox }}
+                    <div class="empty-state">{{T "inbox.empty-state"}}</div>
+                {{ end }}
+            {{ end }}
 
-			<!-- TAB 2: HISTORY RECEIVED -->
-			{{ if eq .Tab "history_rx" }}
-				{{ $hasHistoryRx := false }}
-				{{ range .Letters }}
-					{{ if .HistoryRxSort $.User.Username }}
-						{{ $hasHistoryRx = true }}
-						<a href="/letter/view?id={{ .ID }}" class="letter-card">
-							<div style="display: flex; justify-content: space-between; align-items: center;">
-								<span style="font-weight: 600; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
-									<span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
-									<span>{{ .Title }}</span>
-								</span>
-								<span style="font-size: 18px; opacity: 0.6;">📖</span>
-							</div>
-							<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
-								<span style="color: var(--text-main);">Read at <span class="local-time" data-time="{{ .ReadAt.Format "2006-01-02T15:04:05" }}Z"></span></span> • Sent <span class="local-date" data-time="{{ .CreatedAt.Format "2006-01-02T15:04:05" }}Z"></span>
-							</div>
-						</a>
-					{{ end }}
-				{{ end }}
-				{{ if not $hasHistoryRx }}
-					<div class="empty-state">You haven't opened any letters yet.</div>
-				{{ end }}
-			{{ end }}
+            <!-- TAB 2: HISTORY RECEIVED -->
+            {{ if eq .Tab "history_rx" }}
+                {{ $hasHistoryRx := false }}
+                {{ range .Letters }}
+                    {{ if .HistoryRxSort $.User.Username }}
+                        {{ $hasHistoryRx = true }}
+                        <a href="/letter/view?id={{ .ID }}" class="letter-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 600; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
+                                    <span>{{ .Title }}</span>
+                                </span>
+                                <span style="font-size: 18px; opacity: 0.6;">📖</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 34px;">
+                                <span style="color: var(--text-main);">{{T "history.read-at"}} <span class="local-time" data-time="{{ .ReadAt.Format "2006-01-02T15:04:05" }}Z"></span></span> • {{T "history.sent"}} <span class="local-date" data-time="{{ .CreatedAt.Format "2006-01-02T15:04:05" }}Z"></span>
+                            </div>
+                        </a>
+                    {{ end }}
+                {{ end }}
+                {{ if not $hasHistoryRx }}
+                    <div class="empty-state">{{T "history_rx.empty-state"}}</div>
+                {{ end }}
+            {{ end }}
 
-			<!-- TAB 3: HISTORY SENT -->
-			{{ if eq .Tab "history_tx" }}
-				{{ $hasHistoryTx := false }}
-				{{ range .Letters }}
-					{{ if .HistoryTxSort $.User.Username }}
-						{{ $hasHistoryTx = true }}
-						<a {{ if true }}href="/letter/view?id={{ .ID }}"{{ end }} 
-						   class="letter-card" 
-						   style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.7;{{ end }}">
-							<div style="display: flex; justify-content: space-between; align-items: center;">
-								<span style="font-weight: 600; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
-									<span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
-									<span>{{ .Title }}</span>
-								</span>
-								<div style="text-align: right;">
-									<div style="font-size: 18px; opacity: 0.6;">
-										{{ if .IsUnlocked }}{{ if .IsRead }}📖{{ else }}📬{{ end }}{{ else }}🔒{{ end }}
-									</div>
+            <!-- TAB 3: HISTORY SENT -->
+            {{ if eq .Tab "history_tx" }}
+                {{ $hasHistoryTx := false }}
+                {{ range .Letters }}
+                    {{ if .HistoryTxSort $.User.Username }}
+                        {{ $hasHistoryTx = true }}
+                        <a {{ if true }}href="/letter/view?id={{ .ID }}"{{ end }} 
+                           class="letter-card" 
+                           style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.7;{{ end }}">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 600; font-size: 16px; color: var(--text-main); display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
+                                    <span>{{ .Title }}</span>
+                                </span>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 18px; opacity: 0.6;">
+                                        {{ if .IsUnlocked }}{{ if .IsRead }}📖{{ else }}📬{{ end }}{{ else }}🔒{{ end }}
+                                    </div>
 
-									{{ if and .IsSender (not .IsUnlocked) }}
-										<div style="font-size: 10px; color: var(--accent-yellow); margin-top: 3px; white-space: nowrap;">
-											Preview letter →
-										</div>
-									{{ end }}
-								</div>
-							</div>
-							
-							<div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; padding-left: 34px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-								{{ if .IsUnlocked }}
-									{{ if .IsRead }}
-										<span style="color: var(--text-muted);">📖 Read at <span class="local-time" data-time="{{ .ReadAt.Format "2006-01-02T15:04:05" }}Z"></span></span>
+                                    {{ if and .IsSender (not .IsUnlocked) }}
+                                        <div style="font-size: 10px; color: var(--accent-yellow); margin-top: 3px; white-space: nowrap;">
+                                            {{T "history_tx.preview"}}
+                                        </div>
+                                    {{ end }}
+                                </div>
+                            </div>
+                            
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; padding-left: 34px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                {{ if .IsUnlocked }}
+                                    {{ if .IsRead }}
+                                        <span style="color: var(--text-muted);">{{T "history_tx.read-at"}} <span class="local-time" data-time="{{ .ReadAt.Format "2006-01-02T15:04:05" }}Z"></span></span>
+                                    {{ else }}
+                                        <span style="color: var(--accent-yellow); font-weight: 600;">{{T "history_tx.sent"}} <span class="local-time" data-time="{{ .CreatedAt.Format "2006-01-02T15:04:05" }}Z"></span> {{T "history_tx.unread"}}</span>
+                                    {{ end }}
+                                {{ else }}
+                                    {{ if eq .UnlockType "date" }}
+                                        <span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">{{T "history_tx.time-locked"}}</span>
+                                        <span>
+                                            {{T "history_tx.unlocks-on"}}
+                                            <span class="local-time" data-time="{{ .UnlockAt.Format "2006-01-02T15:04:05" }}Z"></span>
+                                        </span>
+                                    {{ else if eq .UnlockType "random" }}
+                                        <span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">{{T "history_tx.random-time"}}</span>
+                                        <span>{{T "history_tx.waiting-drop"}}</span>
+                                    {{ else if eq .UnlockType "mutual_ready" }}
+                                        <span style="background: rgba(255, 200, 44, 0.15); color: var(--accent-yellow); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">{{T "history_tx.mutual-ready"}}</span>
+                                        <span>{{T "history_tx.tap-check-in"}}</span>
+                                    {{ end }}
+                                {{ end }}
+                            </div>
+                        </a>
+                    {{ end }}
+                {{ end }}
+                {{ if not $hasHistoryTx }}
+                    <div class="empty-state">{{T "history_tx.empty-state"}}</div>
+                {{ end }}
+            {{ end }}
 
-									{{ else }}
-										<span style="color: var(--accent-yellow); font-weight: 600;">📬 Sent <span class="local-time" data-time="{{ .CreatedAt.Format "2006-01-02T15:04:05" }}Z"></span> (Unread)</span>
-									{{ end }}
-								{{ else }}
-									{{ if eq .UnlockType "date" }}
-										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">⏳ Time-Locked</span>
-										<span>
-											Unlocks on
-											<span class="local-time" data-time="{{ .UnlockAt.Format "2006-01-02T15:04:05" }}Z"></span>
-										</span>
-									{{ else if eq .UnlockType "random" }}
-										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">🎲 Random Time</span>
-										<span>Waiting to drop</span>
-									{{ else if eq .UnlockType "mutual_ready" }}
-										<span style="background: rgba(255, 200, 44, 0.15); color: var(--accent-yellow); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">🤝 Mutual Ready</span>
-										<span>Tap to check in</span>
-									{{ end }}
-								{{ end }}
-							</div>
-						</a>
-					{{ end }}
-				{{ end }}
-				{{ if not $hasHistoryTx }}
-					<div class="empty-state">You haven't written any letters yet.</div>
-				{{ end }}
-			{{ end }}
+            <!-- TAB 4: WRITE A LETTER -->
+            {{ if eq .Tab "write" }}
+                {{ if not .Partner.HasPartner }}
+                    <div class="empty-state">{{T "write.no-partner"}}</div>
+                {{ else }}
+                    <form id="letter-form" method="POST" action="/letters/write" enctype="multipart/form-data">
+                        <input type="hidden" name="request_id" id="letter-request-id">
+                        <div class="input-group">
+                            <label>{{T "write.vibe-label"}}</label>
+                            <select name="emoji">
+                                <option value="💌">{{T "write.vibe.love"}}</option>
+                                <option value="🌻">{{T "write.vibe.sunflower"}}</option>
+                                <option value="🌙">{{T "write.vibe.midnight"}}</option>
+                                <option value="🎲">{{T "write.vibe.random"}}</option>
+                                <option value="📷">{{T "write.vibe.photo"}}</option>
+                                <option value="☕">{{T "write.vibe.coffee"}}</option>
+                                <option value="⭐">{{T "write.vibe.special"}}</option>
+                                <option value="🌧️">{{T "write.vibe.rainy"}}</option>
+                                <option value="🎧">{{T "write.vibe.lofi"}}</option>
+                                <option value="🐈">{{T "write.vibe.cat"}}</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>{{T "write.title-label"}}</label>
+                            <input type="text" name="title" placeholder="{{T "write.title-placeholder"}}" required>
+                        </div>
+                        <div class="input-group">
+                            <label>{{T "write.content-label"}}</label>
+                            <textarea name="content" placeholder="{{T "write.content-placeholder"}}" required></textarea>
+                        </div>
+                        <div class="input-group" style="background: #1f1c19; padding: 15px; border-radius: 14px; border: 1px dashed var(--border-color);">
+                            <label style="margin-bottom: 5px;">{{T "write.photo-label"}}</label>
+                            <input type="file" name="image" accept="image/*" style="padding: 10px; border: none; background: transparent; font-size: 14px;">
+                        </div>
+                        <div class="input-group" style="margin-top: 20px;">
+                            <label>{{T "write.seal-label"}}</label>
+                            <select name="unlock_type" id="unlockType" onchange="toggleDateField()">
+                                <option value="instant">{{T "write.seal.instant"}}</option>
+                                <option value="date">{{T "write.seal.date"}}</option>
+                                <option value="mutual_ready">{{T "write.seal.mutual"}}</option>
+                                <option value="random">{{T "write.seal.random"}}</option>
+                            </select>
+                        </div>
+                        <div class="input-group" id="datePickerGroup" style="display: none;">
+                            <label>{{T "write.date-label"}}</label>
+                            <input type="datetime-local" name="unlock_date">
+                            <!-- ADD THIS LINE: -->
+                            <input type="hidden" name="tz_offset" id="tz_offset">
+                        </div>
+                        <div class="input-group" id="randomPickerGroup" style="display: none;">
+                            <label>{{T "write.random-label"}}</label>
+                            <select name="random_days">
+                                <option value="1">{{T "write.random.24h"}}</option>
+                                <option value="7">{{T "write.random.7d"}}</option>
+                                <option value="14">{{T "write.random.14d"}}</option>
+                                <option value="30">{{T "write.random.30d"}}</option>
+                            </select>
+                        </div>
+                        <button id="send-letter-btn" type="submit">{{T "write.submit-btn"}}</button>
+                    </form>
+                {{ end }}
+            {{ end }}
 
-			<!-- TAB 4: WRITE A LETTER -->
-			{{ if eq .Tab "write" }}
-				{{ if not .Partner.HasPartner }}
-					<div class="empty-state">You need to link with a partner in the Profile tab before writing letters!</div>
-				{{ else }}
-					<form id="letter-form" method="POST" action="/letters/write" enctype="multipart/form-data">
-						<input type="hidden" name="request_id" id="letter-request-id">
-						<div class="input-group">
-							<label>Vibe / Emoji</label>
-							<select name="emoji">
-								<option value="💌">💌 Love Letter</option>
-								<option value="🌻">🌻 Sunflower</option>
-								<option value="🌙">🌙 Midnight Thought</option>
-								<option value="🎲">🎲 Random Surprise</option>
-								<option value="📷">📷 Photo Memory</option>
-								<option value="☕">☕ Cozy Coffee</option>
-								<option value="⭐">⭐ Special Moment</option>
-								<option value="🌧️">🌧️ Rainy Day</option>
-								<option value="🎧">🎧 Lo-Fi Jam</option>
-								<option value="🐈">🐈 Cute Cat</option>
-							</select>
-						</div>
-						<div class="input-group">
-							<label>Title / Envelope Note</label>
-							<input type="text" name="title" placeholder="e.g. Open when you miss me" required>
-						</div>
-						<div class="input-group">
-							<label>Letter Content</label>
-							<textarea name="content" placeholder="Write your heart out..." required></textarea>
-						</div>
-						<div class="input-group" style="background: #1f1c19; padding: 15px; border-radius: 14px; border: 1px dashed var(--border-color);">
-							<label style="margin-bottom: 5px;">Attach a Photo (Optional)</label>
-							<input type="file" name="image" accept="image/*" style="padding: 10px; border: none; background: transparent; font-size: 14px;">
-						</div>
-						<div class="input-group" style="margin-top: 20px;">
-							<label>Seal Condition</label>
-							<select name="unlock_type" id="unlockType" onchange="toggleDateField()">
-								<option value="instant">Instant (Read right away)</option>
-								<option value="date">Specific Date & Time</option>
-								<option value="mutual_ready">Mutual Ready (Both must click ready)</option>
-								<option value="random">Random Time Surprise</option>
-							</select>
-						</div>
-						<div class="input-group" id="datePickerGroup" style="display: none;">
-							<label>Unlock Date</label>
-							<input type="datetime-local" name="unlock_date">
-							<!-- ADD THIS LINE: -->
-							<input type="hidden" name="tz_offset" id="tz_offset">
-						</div>
-						<div class="input-group" id="randomPickerGroup" style="display: none;">
-							<label>Unlock Randomly Within...</label>
-							<select name="random_days">
-								<option value="1">The next 24 hours</option>
-								<option value="7">The next 7 days</option>
-								<option value="14">The next 14 days</option>
-								<option value="30">The next month</option>
-							</select>
-						</div>
-						<button id="send-letter-btn" type="submit">Seal & Send 💌</button>
-					</form>
-				{{ end }}
-			{{ end }}
+            <!-- TAB 5: PROFILE & PARTNER -->
+            {{ if eq .Tab "profile" }}
+                
+                <!-- Split Profile Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                    
+                    <!-- 1. YOUR PROFILE -->
+                    <div style="background: #1f1c19; border: 1px solid var(--border-color); padding: 25px 20px; border-radius: 24px; text-align: center; position: relative;">
+                        {{ if .User.PfpPath }}
+                            <img src="{{ .User.PfpPath }}" class="pfp-circle">
+                        {{ else }}
+                            <div class="pfp-circle">🌻</div>
+                        {{ end }}
+                        <h3 style="margin: 0 0 10px 0; font-size: 20px;">{{T "profile.you"}} ({{ .User.Username }})</h3>
+                        <span class="status-bubble">{{ .User.Status }}</span>
+                        <p style="color: var(--text-muted); font-size: 14px; margin-top: 15px; line-height: 1.5;">{{ .User.Bio }}</p>
+                        
+                        <button onclick="document.getElementById('editProfileForm').style.display='block'" style="background: transparent; border: 1px dashed var(--border-color); color: var(--text-muted); padding: 8px; font-size: 12px; margin-top: 15px; width: 100%;">{{T "profile.edit-btn"}}</button>
+                    </div>
 
-			<!-- TAB 5: PROFILE & PARTNER -->
-			{{ if eq .Tab "profile" }}
-				
-				<!-- Split Profile Grid -->
-				<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px;">
-					
-					<!-- 1. YOUR PROFILE -->
-					<div style="background: #1f1c19; border: 1px solid var(--border-color); padding: 25px 20px; border-radius: 24px; text-align: center; position: relative;">
-						{{ if .User.PfpPath }}
-							<img src="{{ .User.PfpPath }}" class="pfp-circle">
-						{{ else }}
-							<div class="pfp-circle">🌻</div>
-						{{ end }}
-						<h3 style="margin: 0 0 10px 0; font-size: 20px;">You ({{ .User.Username }})</h3>
-						<span class="status-bubble">{{ .User.Status }}</span>
-						<p style="color: var(--text-muted); font-size: 14px; margin-top: 15px; line-height: 1.5;">{{ .User.Bio }}</p>
-						
-						<button onclick="document.getElementById('editProfileForm').style.display='block'" style="background: transparent; border: 1px dashed var(--border-color); color: var(--text-muted); padding: 8px; font-size: 12px; margin-top: 15px; width: 100%;">Edit Profile</button>
-					</div>
+                    <!-- 2. PARTNER PROFILE -->
+                    {{ if .Partner.HasPartner }}
+                        <div style="background: #1f1c19; border: 1px solid var(--border-color); padding: 25px 20px; border-radius: 24px; text-align: center;">
+                            {{ if .PartnerProfile.PfpPath }}
+                                <img src="{{ .PartnerProfile.PfpPath }}" class="pfp-circle">
+                            {{ else }}
+                                <div class="pfp-circle">🤍</div>
+                            {{ end }}
+                            <h3 style="margin: 0 0 10px 0; font-size: 20px;">{{ .PartnerProfile.Username }}</h3>
+                            <span class="status-bubble">{{ .PartnerProfile.Status }}</span>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 15px; line-height: 1.5;">{{ .PartnerProfile.Bio }}</p>
+                        </div>
+                    {{ else }}
+                        <div style="background: transparent; border: 1px dashed var(--border-color); padding: 25px 20px; border-radius: 24px; text-align: center; display: flex; flex-direction: column; justify-content: center; opacity: 0.6;">
+                            <div class="pfp-circle" style="border-color: var(--border-color); background: transparent;">?</div>
+                            <p style="font-size: 14px;">{{T "profile.no-partner"}}</p>
+                        </div>
+                    {{ end }}
+                </div>
 
-					<!-- 2. PARTNER PROFILE -->
-					{{ if .Partner.HasPartner }}
-						<div style="background: #1f1c19; border: 1px solid var(--border-color); padding: 25px 20px; border-radius: 24px; text-align: center;">
-							{{ if .PartnerProfile.PfpPath }}
-								<img src="{{ .PartnerProfile.PfpPath }}" class="pfp-circle">
-							{{ else }}
-								<div class="pfp-circle">🤍</div>
-							{{ end }}
-							<h3 style="margin: 0 0 10px 0; font-size: 20px;">{{ .PartnerProfile.Username }}</h3>
-							<span class="status-bubble">{{ .PartnerProfile.Status }}</span>
-							<p style="color: var(--text-muted); font-size: 14px; margin-top: 15px; line-height: 1.5;">{{ .PartnerProfile.Bio }}</p>
-						</div>
-					{{ else }}
-						<div style="background: transparent; border: 1px dashed var(--border-color); padding: 25px 20px; border-radius: 24px; text-align: center; display: flex; flex-direction: column; justify-content: center; opacity: 0.6;">
-							<div class="pfp-circle" style="border-color: var(--border-color); background: transparent;">?</div>
-							<p style="font-size: 14px;">No partner linked yet.</p>
-						</div>
-					{{ end }}
-				</div>
+                <!-- HIDDEN EDIT PROFILE FORM -->
+                <div id="editProfileForm" style="display: none; background: #1f1c19; border: 1px solid var(--accent-yellow); padding: 20px; border-radius: 16px; margin-bottom: 25px;">
+                    <h4 style="margin: 0 0 15px 0;">{{T "profile.edit.title"}}</h4>
+                    <form method="POST" action="/profile/update" enctype="multipart/form-data">
+                        <div class="input-group">
+                            <label>{{T "profile.edit.status-label"}}</label>
+                            <input type="text" name="status" value="{{ .User.Status }}" placeholder="{{T "profile.edit.status-placeholder"}}" required>
+                        </div>
+                        <div class="input-group">
+                            <label>{{T "profile.edit.bio-label"}}</label>
+                            <textarea name="bio" style="min-height: 80px;" required>{{ .User.Bio }}</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>{{T "profile.edit.language-label"}}</label>
+                            <select name="language" required>
+                                <option value="en" {{ if eq .User.LanguagePreference "en" }}selected{{ end }}>
+                                    English
+                                </option>
 
-				<!-- HIDDEN EDIT PROFILE FORM -->
-				<div id="editProfileForm" style="display: none; background: #1f1c19; border: 1px solid var(--accent-yellow); padding: 20px; border-radius: 16px; margin-bottom: 25px;">
-					<h4 style="margin: 0 0 15px 0;">Update Your Vibe</h4>
-					<form method="POST" action="/profile/update" enctype="multipart/form-data">
-						<div class="input-group">
-							<label>Status Emoji or Word</label>
-							<input type="text" name="status" value="{{ .User.Status }}" placeholder="e.g. 🎧 Listening to lofi" required>
-						</div>
-						<div class="input-group">
-							<label>Short Bio</label>
-							<textarea name="bio" style="min-height: 80px;" required>{{ .User.Bio }}</textarea>
-						</div>
-						<div class="input-group">
-							<label>Language</label>
-							<select name="language" required>
-								<option value="en" {{ if eq .User.LanguagePreference "en" }}selected{{ end }}>
-									English
-								</option>
+                                <option value="de" {{ if eq .User.LanguagePreference "de" }}selected{{ end }}>
+                                    Deutsch
+                                </option>
 
-								<option value="de" {{ if eq .User.LanguagePreference "de" }}selected{{ end }}>
-									Deutsch
-								</option>
+                                <option value="zh-TW" {{ if eq .User.LanguagePreference "zh-TW" }}selected{{ end }}>
+                                    繁體中文
+                                </option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="background: #161412; padding: 10px; border-radius: 10px;">
+                            <label>{{T "profile.edit.pfp-label"}}</label>
+                            <input type="file" name="pfp" accept="image/*" style="font-size: 12px; border: none; padding: 5px;">
+                        </div>
+                        <button type="submit" style="padding: 12px; font-size: 14px;">{{T "profile.edit.save-btn"}}</button>
+                        <button type="button" onclick="document.getElementById('editProfileForm').style.display='none'" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 12px; font-size: 14px;">{{T "profile.edit.cancel-btn"}}</button>
+                    </form>
+                </div>
 
-								<option value="zh-TW" {{ if eq .User.LanguagePreference "zh-TW" }}selected{{ end }}>
-									繁體中文
-								</option>
-							</select>
-						</div>
-						<div class="input-group" style="background: #161412; padding: 10px; border-radius: 10px;">
-							<label>Profile Picture</label>
-							<input type="file" name="pfp" accept="image/*" style="font-size: 12px; border: none; padding: 5px;">
-						</div>
-						<button type="submit" style="padding: 12px; font-size: 14px;">Save Profile</button>
-						<button type="button" onclick="document.getElementById('editProfileForm').style.display='none'" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 12px; font-size: 14px;">Cancel</button>
-					</form>
-				</div>
+                <!-- FRIEND CODE SECTION -->
+                <div style="border-top: 1px dashed var(--border-color); padding-top: 25px;">
+                    <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1.5px; text-align: center;">{{T "profile.friend-code-label"}}</p>
+                    <div class="code-reveal" style="margin-bottom: 25px;">
+                        {{ .User.FriendCode }}
+                    </div>
 
-				<!-- FRIEND CODE SECTION -->
-				<div style="border-top: 1px dashed var(--border-color); padding-top: 25px;">
-					<p style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1.5px; text-align: center;">Your Friend Code</p>
-					<div class="code-reveal" style="margin-bottom: 25px;">
-						{{ .User.FriendCode }}
-					</div>
+                    {{ if not .Partner.HasPartner }}
+                        <form method="POST" action="/partner/add">
+                            <div class="input-group">
+                                <label>{{T "profile.link.label"}}</label>
+                                <input type="text" name="friend_code" placeholder="{{T "profile.link.placeholder"}}" required>
+                            </div>
+                            <button type="submit">{{T "profile.link.submit"}}</button>
+                        </form>
+                    {{ else }}
+                        {{ if .Partner.IsPending }}
+                            <div style="text-align: center; margin-bottom: 20px; padding: 25px; border: 1px dashed var(--border-color); border-radius: 16px;">
+                                {{ if .Partner.IsSender }}
+                                    <p style="font-size: 15px; margin: 0 0 10px 0;">{{T "profile.link.request-sent"}} <b>{{ .Partner.PartnerName }}</b></p>
+                                {{ else }}
+                                    <p style="font-size: 15px; margin: 0 0 15px 0;"><b>{{ .Partner.PartnerName }}</b> {{T "profile.link.wants-to-link"}}</p>
+                                    <form method="POST" action="/partner/add" style="margin-bottom: 0;">
+                                        <input type="hidden" name="friend_code" value="{{ .Partner.PartnerCode }}">
+                                        <button type="submit" style="background: var(--accent-yellow); color: #161412;">{{T "profile.link.accept"}}</button>
+                                    </form>
+                                {{ end }}
+                            </div>
+                            <form method="POST" action="/partner/remove">
+                                <button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">{{T "profile.link.cancel"}}</button>
+                            </form>
+                        {{ else }}
+                            <form method="POST" action="/partner/remove">
+                                <button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">{{T "profile.link.sever"}}</button>
+                            </form>
+                        {{ end }}
+                    {{ end }}
+                </div>
+            {{ end }}
 
-					{{ if not .Partner.HasPartner }}
-						<form method="POST" action="/partner/add">
-							<div class="input-group">
-								<label>Link with a partner</label>
-								<input type="text" name="friend_code" placeholder="Enter their code" required>
-							</div>
-							<button type="submit">Send Request</button>
-						</form>
-					{{ else }}
-						{{ if .Partner.IsPending }}
-							<div style="text-align: center; margin-bottom: 20px; padding: 25px; border: 1px dashed var(--border-color); border-radius: 16px;">
-								{{ if .Partner.IsSender }}
-									<p style="font-size: 15px; margin: 0 0 10px 0;">Request sent to <b>{{ .Partner.PartnerName }}</b></p>
-								{{ else }}
-									<p style="font-size: 15px; margin: 0 0 15px 0;"><b>{{ .Partner.PartnerName }}</b> wants to link!</p>
-									<form method="POST" action="/partner/add" style="margin-bottom: 0;">
-										<input type="hidden" name="friend_code" value="{{ .Partner.PartnerCode }}">
-										<button type="submit" style="background: var(--accent-yellow); color: #161412;">Accept Request</button>
-									</form>
-								{{ end }}
-							</div>
-							<form method="POST" action="/partner/remove">
-								<button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Cancel Request</button>
-							</form>
-						{{ else }}
-							<form method="POST" action="/partner/remove">
-								<button type="submit" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">Sever Link</button>
-							</form>
-						{{ end }}
-					{{ end }}
-				</div>
-			{{ end }}
+        </div> <!-- END TAB CONTENT WRAPPER -->
 
-		</div> <!-- END TAB CONTENT WRAPPER -->
+        <a href="/logout" class="link-btn">{{T "nav.logout"}}</a>
+    </div>
 
-		<a href="/logout" class="link-btn">[ log out ]</a>
-	</div>
+    <script>
+        function toggleDateField() {
+            var type = document.getElementById("unlockType").value;
+            document.getElementById("datePickerGroup").style.display = (type === "date") ? "block" : "none";
+            document.getElementById("randomPickerGroup").style.display = (type === "random") ? "block" : "none";
+        }
+    </script>
+    
+    <!-- AUDIO EASTER EGG -->
+    <button id="audio-toggle" style="background: transparent; color: #555; padding: 5px; width: auto; font-size: 12px; margin: 0; position: absolute; bottom: 15px; left: 15px; border: none; box-shadow: none;">
+        🔇
+    </button>
+    <script>
+        let audioEnabled = false;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        document.getElementById('audio-toggle').onclick = function() {
+            audioEnabled = !audioEnabled;
+            this.innerText = audioEnabled ? "🔊" : "🔇";
+        };
+        function playClick() {
+            if (!audioEnabled) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.08);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.08);
+        }
+        document.querySelectorAll('input, textarea, button, select').forEach(el => {
+            if(el.id !== 'audio-toggle') el.addEventListener('focus', playClick);
+        });
+    </script>
+    <script>
+        let tzInput = document.getElementById("tz_offset");
+        let unlockDateInput = document.querySelector('input[name="unlock_date"]');
 
-	<script>
-		function toggleDateField() {
-			var type = document.getElementById("unlockType").value;
-			document.getElementById("datePickerGroup").style.display = (type === "date") ? "block" : "none";
-			document.getElementById("randomPickerGroup").style.display = (type === "random") ? "block" : "none";
-		}
-	</script>
-	
-	<!-- AUDIO EASTER EGG -->
-	<button id="audio-toggle" style="background: transparent; color: #555; padding: 5px; width: auto; font-size: 12px; margin: 0; position: absolute; bottom: 15px; left: 15px; border: none; box-shadow: none;">
-		🔇
-	</button>
-	<script>
-		let audioEnabled = false;
-		const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-		document.getElementById('audio-toggle').onclick = function() {
-			audioEnabled = !audioEnabled;
-			this.innerText = audioEnabled ? "🔊" : "🔇";
-		};
-		function playClick() {
-			if (!audioEnabled) return;
-			const osc = audioCtx.createOscillator();
-			const gain = audioCtx.createGain();
-			osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-			gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-			gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.08);
-			osc.connect(gain);
-			gain.connect(audioCtx.destination);
-			osc.start();
-			osc.stop(audioCtx.currentTime + 0.08);
-		}
-		document.querySelectorAll('input, textarea, button, select').forEach(el => {
-			if(el.id !== 'audio-toggle') el.addEventListener('focus', playClick);
-		});
-	</script>
-	<script>
-		let tzInput = document.getElementById("tz_offset");
-		let unlockDateInput = document.querySelector('input[name="unlock_date"]');
+        if (tzInput && unlockDateInput) {
+            unlockDateInput.addEventListener("change", function() {
+                if (this.value) {
+                    tzInput.value = new Date(this.value).getTimezoneOffset();
+                }
+            });
+        }
 
-		if (tzInput && unlockDateInput) {
-			unlockDateInput.addEventListener("change", function() {
-				if (this.value) {
-					tzInput.value = new Date(this.value).getTimezoneOffset();
-				}
-			});
-		}
+        document.querySelectorAll('.local-time').forEach(el => {
+            let d = new Date(el.getAttribute('data-time'));
+            if (!isNaN(d)) {
+                el.innerText = d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+            }
+        });
 
-		document.querySelectorAll('.local-time').forEach(el => {
-			let d = new Date(el.getAttribute('data-time'));
-			if (!isNaN(d)) {
-				el.innerText = d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
-			}
-		});
+        document.querySelectorAll('.local-date').forEach(el => {
+            let d = new Date(el.getAttribute('data-time'));
+            if (!isNaN(d)) {
+                el.innerText = d.toLocaleString(undefined, { month: 'short', day: 'numeric' });
+            }
+        });
+    </script>
+    <script>
+        const letterForm = document.getElementById("letter-form");
 
-		document.querySelectorAll('.local-date').forEach(el => {
-			let d = new Date(el.getAttribute('data-time'));
-			if (!isNaN(d)) {
-				el.innerText = d.toLocaleString(undefined, { month: 'short', day: 'numeric' });
-			}
-		});
-	</script>
-	<script>
-		const letterForm = document.getElementById("letter-form");
+        if (letterForm) {
+            const sendButton = document.getElementById("send-letter-btn");
+            const requestInput = document.getElementById("letter-request-id");
+            let sending = false;
 
-		if (letterForm) {
-			const sendButton = document.getElementById("send-letter-btn");
-			const requestInput = document.getElementById("letter-request-id");
-			let sending = false;
+            requestInput.value = crypto.randomUUID();
 
-			requestInput.value = crypto.randomUUID();
+            letterForm.addEventListener("submit", function (e) {
+                if (sending) {
+                    e.preventDefault();
+                    return;
+                }
 
-			letterForm.addEventListener("submit", function (e) {
-				if (sending) {
-					e.preventDefault();
-					return;
-				}
-
-				sending = true;
-				sendButton.disabled = true;
-				sendButton.textContent = "Sending... 💌";
-				sendButton.style.opacity = "0.6";
-				sendButton.style.cursor = "wait";
-			});
-		}
-	</script>
+                sending = true;
+                sendButton.disabled = true;
+                // Go templating renders this securely right into the JavaScript block
+                sendButton.textContent = '{{T "write.sending-btn"}}';
+                sendButton.style.opacity = "0.6";
+                sendButton.style.cursor = "wait";
+            });
+        }
+    </script>
 </body>
 </html>
