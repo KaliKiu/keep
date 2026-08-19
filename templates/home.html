@@ -151,7 +151,10 @@
 								{{ else }}
 									{{ if eq .UnlockType "date" }}
 										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">⏳ Time-Locked</span>
-										<span>Unlocks on {{ .UnlockAt.Format "Jan 02" }}</span>
+										<span>
+											Unlocks on
+											<span class="local-time" data-time="{{ .UnlockAt.Format "2006-01-02T15:04:05" }}Z"></span>
+										</span>
 									{{ else if eq .UnlockType "random" }}
 										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">🎲 Random Time</span>
 										<span>Waiting to drop</span>
@@ -375,8 +378,14 @@
 	</script>
 	<script>
 		let tzInput = document.getElementById("tz_offset");
-		if(tzInput) {
-			tzInput.value = new Date().getTimezoneOffset();
+		let unlockDateInput = document.querySelector('input[name="unlock_date"]');
+
+		if (tzInput && unlockDateInput) {
+			unlockDateInput.addEventListener("change", function() {
+				if (this.value) {
+					tzInput.value = new Date(this.value).getTimezoneOffset();
+				}
+			});
 		}
 
 		document.querySelectorAll('.local-time').forEach(el => {
