@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>keep.</title>
+	<title>{{T "home.title"}}</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="/static/style.css">
 	<link rel="icon" type="image/x-icon" href="static/sunflower.png">
@@ -21,8 +21,8 @@
 </head>
 <body>
 	<div class="card">
-		<h2>keep. 🌻</h2>
-		<p class="subtitle">logged in as <b>{{ .User.Username }}</b></p>
+		<h2>{{T "home.title"}}</h2>
+		<p class="subtitle">{{T "home.subtitle"}} <b>{{ .User.Username }}</b></p>
 
 		{{ if .Error }}
 			<div class="error" style="text-align: center; margin-bottom: 15px;">{{ .Error }}</div>
@@ -31,12 +31,12 @@
 		<!-- SUB NAVIGATION TABS -->
 		<div class="nav-tabs">
 			<a href="/?tab=inbox" class="tab-item {{ if eq .Tab "inbox" }}active{{ end }}">
-				Inbox{{ if .User.HasUnreadInbox .Letters }}<span style="color:#ffc82c; font-size:14px; margin-left:5px; text-shadow:0 0 6px #ffc82c; vertical-align:middle;">●</span>{{ end }}
+				{{T "nav.inbox"}}{{ if .User.HasUnreadInbox .Letters }}<span style="color:#ffc82c; font-size:14px; margin-left:5px; text-shadow:0 0 6px #ffc82c; vertical-align:middle;">●</span>{{ end }}
 			</a>
-			<a href="/?tab=history_rx" class="tab-item {{ if eq .Tab "history_rx" }}active{{ end }}">Received</a>
-			<a href="/?tab=history_tx" class="tab-item {{ if eq .Tab "history_tx" }}active{{ end }}">Sent</a>
-			<a href="/?tab=write" class="tab-item {{ if eq .Tab "write" }}active{{ end }}">Write</a>
-			<a href="/?tab=profile" class="tab-item {{ if eq .Tab "profile" }}active{{ end }}">Profile</a>
+			<a href="/?tab=history_rx" class="tab-item {{ if eq .Tab "history_rx" }}active{{ end }}"> {{T "nav.received"}} </a>
+			<a href="/?tab=history_tx" class="tab-item {{ if eq .Tab "history_tx" }}active{{ end }}"> {{T "nav.sent"}} </a>
+			<a href="/?tab=write" class="tab-item {{ if eq .Tab "write" }}active{{ end }}"> {{T "nav.write"}} </a>
+			<a href="/?tab=profile" class="tab-item {{ if eq .Tab "profile" }}active{{ end }}"> {{T "nav.profile"}} </a>
 		</div>
 
 		<!-- SMOOTH ANIMATION WRAPPER -->   
@@ -66,17 +66,17 @@
 							<!-- ENHANCED UI BADGES -->
 							<div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; padding-left: 34px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
 								{{ if .IsUnlocked }}
-									<span style="color: var(--accent-yellow); font-weight: 600;">✨ Ready to read</span>
+									<span style="color: var(--accent-yellow); font-weight: 600;">{{T "inbox.unlocked-state"}}</span>
 								{{ else }}
 									{{ if eq .UnlockType "date" }}
-										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">⏳ Time-Locked</span>
-										<span>Unlocks on <span class="local-time" data-time="{{ .UnlockAt.Format "2006-01-02T15:04:05" }}Z"></span></span>
+										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">{{T "inbox.unlocked-time-state"}}</span>
+										<span>{{T "inbox.unlocks-on"}} <span class="local-time" data-time="{{ .UnlockAt.Format "2006-01-02T15:04:05" }}Z"></span></span>
 									{{ else if eq .UnlockType "random" }}
-										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">🎲 Random Time</span>
-										<span>Will drop as a surprise</span>
+										<span style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">{{T "inbox.unlocked-surprise-state"}}</span>
+										<span>{{T "inbox.unlocks-surprsie"}}</span>
 									{{ else if eq .UnlockType "mutual_ready" }}
-										<span style="background: rgba(255, 200, 44, 0.15); color: var(--accent-yellow); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">🤝 Mutual Ready</span>
-										<span>Tap to check in</span>
+										<span style="background: rgba(255, 200, 44, 0.15); color: var(--accent-yellow); padding: 3px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">{{T "inbox.unlocked-mutual-state"}}</span>
+										<span>{{T "inbox.unlocks-mutual"}}</span>
 									{{ end }}
 								{{ end }}
 							</div>
@@ -84,7 +84,7 @@
 					{{ end }}
 				{{ end }}
 				{{ if not $hasInbox }}
-					<div class="empty-state">No new letters waiting for you.</div>
+					<div class="empty-state">{{T "inbox.empty-state"}}</div>
 				{{ end }}
 			{{ end }}
 
@@ -286,6 +286,22 @@
 						<div class="input-group">
 							<label>Short Bio</label>
 							<textarea name="bio" style="min-height: 80px;" required>{{ .User.Bio }}</textarea>
+						</div>
+						<div class="input-group">
+							<label>Language</label>
+							<select name="language" required>
+								<option value="en" {{ if eq .User.LanguagePreference "en" }}selected{{ end }}>
+									English
+								</option>
+
+								<option value="de" {{ if eq .User.LanguagePreference "de" }}selected{{ end }}>
+									Deutsch
+								</option>
+
+								<option value="zh-TW" {{ if eq .User.LanguagePreference "zh-TW" }}selected{{ end }}>
+									繁體中文
+								</option>
+							</select>
 						</div>
 						<div class="input-group" style="background: #161412; padding: 10px; border-radius: 10px;">
 							<label>Profile Picture</label>

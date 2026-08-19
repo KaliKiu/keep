@@ -1,0 +1,21 @@
+{
+  "title": "keep. 🌻",
+
+  "home.title": "keep. 🌻",
+  "home.subtitle": "登入身份",
+
+  "nav.inbox": "收件匣",
+  "nav.received": "已收到",
+  "nav.sent": "已寄出",
+  "nav.write": "寫信",
+  "nav.profile": "個人資料",
+
+  "inbox.empty-state": "目前沒有新的信件在等你。",
+  "inbox.unlocked-state": "✨ 可以閱讀了",
+  "inbox.unlocks-on": "開啟時間",
+  "inbox.unlocks-surprsie": "會在某個驚喜時刻送達",
+  "inbox.unlocks-mutual": "點擊查看狀態",
+  "inbox.unlocked-time-state": "⏳ 定時鎖定",
+  "inbox.unlocked-surprise-state": "⏳ 驚喜鎖定",
+  "inbox.unlocked-mutual-state": "⏳ 雙方準備"
+}

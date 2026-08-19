@@ -13,12 +13,25 @@ import (
 
 var sessions = make(map[string]string)
 
-func renderTemplate(w http.ResponseWriter, tmplName string, data interface{}) {
-	tmpl, err := template.ParseFiles("templates/" + tmplName)
+func renderTemplate(
+	w http.ResponseWriter,
+	tmplName string,
+	data interface{},
+	lang Language,
+) {
+	tmpl, err := template.New(tmplName).
+		Funcs(template.FuncMap{
+			"T": func(key string) string {
+				return translate(lang, key)
+			},
+		}).
+		ParseFiles("templates/" + tmplName)
+
 	if err != nil {
 		http.Error(w, "Template error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	tmpl.Execute(w, data)
 }
 
@@ -38,7 +51,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 		errorMsg = "Invalid username or password."
 	}
-	renderTemplate(w, "login.html", map[string]string{"Error": errorMsg})
+	renderTemplate(w, "login.html", map[string]string{"Error": errorMsg}, LanguageEN)
 }
 
 func HandleRegister(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +74,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	renderTemplate(w, "register.html", map[string]string{"Error": errorMsg})
+	renderTemplate(w, "register.html", map[string]string{"Error": errorMsg}, LanguageEN)
 }
 
 func HandleLogout(w http.ResponseWriter, r *http.Request) {
@@ -110,7 +123,7 @@ func HandleHome(w http.ResponseWriter, r *http.Request) {
 		"Error":          r.URL.Query().Get("err"),
 	}
 
-	renderTemplate(w, "home.html", data)
+	renderTemplate(w, "home.html", data, user.LanguagePreference)
 }
 
 func HandleUpload(w http.ResponseWriter, r *http.Request) {
@@ -163,6 +176,13 @@ func HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20)
 	bio := r.FormValue("bio")
 	status := r.FormValue("status")
+	language := Language(r.FormValue("language"))
+	switch language {
+	case LanguageEN, LanguageDE, LanguageZHTW:
+		// valid
+	default:
+		language = LanguageEN
+	}
 
 	var imagePath string
 	file, header, err := r.FormFile("pfp")
@@ -176,7 +196,7 @@ func HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 		imagePath = "/uploads/" + filename
 	}
 
-	UpdateUserProfile(user.ID, bio, status, imagePath)
+	UpdateUserProfile(user.ID, bio, status, imagePath, language)
 	http.Redirect(w, r, "/?tab=profile", http.StatusSeeOther)
 }
 

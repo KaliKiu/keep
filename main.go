@@ -26,6 +26,7 @@ func main() {
 	}
 
 	InitDB(dbPath)
+	LoadTranslations()
 
 	http.HandleFunc("/", HandleHome)
 	http.HandleFunc("/login", HandleLogin)

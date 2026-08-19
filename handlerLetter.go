@@ -114,7 +114,7 @@ func HandleViewLetter(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"Letter": letter,
 	}
-	renderTemplate(w, "letter.html", data)
+	renderTemplate(w, "letter.html", data, user.LanguagePreference)
 }
 
 func HandleReadyLetter(w http.ResponseWriter, r *http.Request) {

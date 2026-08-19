@@ -24,7 +24,8 @@ func InitDB(dbPath string) {
 		friend_code TEXT UNIQUE,
 		bio TEXT DEFAULT 'Just setting up my keep.',
 		status TEXT DEFAULT '🌻',
-		pfp_path TEXT DEFAULT ''
+		pfp_path TEXT DEFAULT '',
+		language_preference TEXT NOT NULL DEFAULT 'en'
 	);`
 	db.Exec(queryUsers)
 
@@ -78,6 +79,7 @@ func InitDB(dbPath string) {
 	db.Exec("ALTER TABLE users ADD COLUMN bio TEXT DEFAULT 'Just setting up my keep.'")
 	db.Exec("ALTER TABLE users ADD COLUMN status TEXT DEFAULT '🌻'")
 	db.Exec("ALTER TABLE users ADD COLUMN pfp_path TEXT DEFAULT ''")
+	db.Exec("ALTER TABLE users ADD COLUMN language_preference TEXT NOT NULL DEFAULT 'en'")
 
 	_, err = db.Exec(`
 		CREATE UNIQUE INDEX IF NOT EXISTS idx_letters_sender_request

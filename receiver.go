@@ -17,3 +17,10 @@ func (u User) HasUnreadInbox(letters []Letter) bool {
 	}
 	return false
 }
+func T(lang Language, key string) string {
+	if value, ok := translations[lang][key]; ok {
+		return value
+	}
+
+	return translations[LanguageEN][key]
+}

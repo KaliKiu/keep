@@ -1,0 +1,22 @@
+{
+    "title": "keep. 🌻",
+
+    "home.title": "keep. 🌻",
+    "home.subtitle": "logged in as",
+
+    "nav.inbox": "Inbox",
+    "nav.received": "Received",
+    "nav.sent": "Sent",
+    "nav.write": "Write",
+    "nav.profile": "Profile",
+
+    "inbox.empty-state": "No new letters waiting for you.",
+    "inbox.unlocked-state":"✨ Ready to read",
+    "inbox.unlocks-on": "Unlocks on",
+    "inbox.unlocks-surprsie": "Will drop as a surprise",
+    "inbox.unlocks-mutual": "Tap to check in",
+    "inbox.unlocked-time-state": "⏳ Time-Locked",
+    "inbox.unlocked-surprise-state": "⏳ Time-Locked",
+    "inbox.unlocked-mutual-state": "⏳ Time-Locked"
+
+}

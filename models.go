@@ -2,13 +2,22 @@ package main
 
 import "time"
 
+type Language string
+
+const (
+	LanguageEN   Language = "en"
+	LanguageDE   Language = "de"
+	LanguageZHTW Language = "zh-TW"
+)
+
 type User struct {
-	ID         int
-	Username   string
-	FriendCode string
-	Bio        string
-	Status     string
-	PfpPath    string
+	ID                 int
+	Username           string
+	FriendCode         string
+	Bio                string
+	Status             string
+	PfpPath            string
+	LanguagePreference Language
 }
 
 type PartnershipInfo struct {
