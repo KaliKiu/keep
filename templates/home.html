@@ -119,7 +119,7 @@
 				{{ range .Letters }}
 					{{ if .HistoryTxSort $.User.Username }}
 						{{ $hasHistoryTx = true }}
-						<a {{ if or .IsUnlocked (eq .UnlockType "mutual_ready") }}href="/letter/view?id={{ .ID }}"{{ end }} 
+						<a {{ if true }}href="/letter/view?id={{ .ID }}"{{ end }} 
 						   class="letter-card" 
 						   style="{{ if not .IsUnlocked }}background: transparent; border-style: dashed; opacity: 0.7;{{ end }}">
 							<div style="display: flex; justify-content: space-between; align-items: center;">
@@ -127,9 +127,17 @@
 									<span style="font-size: 22px;">{{ if .Emoji }}{{ .Emoji }}{{ else }}💌{{ end }}</span>
 									<span>{{ .Title }}</span>
 								</span>
-								<span style="font-size: 18px; opacity: 0.6;">
-									{{ if .IsUnlocked }}{{ if .IsRead }}📖{{ else }}📬{{ end }}{{ else }}🔒{{ end }}
-								</span>
+								<div style="text-align: right;">
+									<div style="font-size: 18px; opacity: 0.6;">
+										{{ if .IsUnlocked }}{{ if .IsRead }}📖{{ else }}📬{{ end }}{{ else }}🔒{{ end }}
+									</div>
+
+									{{ if and .IsSender (not .IsUnlocked) }}
+										<div style="font-size: 10px; color: var(--accent-yellow); margin-top: 3px; white-space: nowrap;">
+											Preview letter →
+										</div>
+									{{ end }}
+								</div>
 							</div>
 							
 							<div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; padding-left: 34px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">

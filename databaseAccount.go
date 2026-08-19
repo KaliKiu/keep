@@ -42,7 +42,6 @@ func GetUserByUsername(username string) (User, error) {
 		Scan(&u.ID, &u.Username, &u.FriendCode, &u.Bio, &u.Status, &u.PfpPath)
 	return u, err
 }
-
 func GetUserByID(id int) (User, error) {
 	var u User
 	err := db.QueryRow("SELECT id, username, friend_code, bio, status, pfp_path FROM users WHERE id = ?", id).
@@ -94,7 +93,11 @@ func CanUserAccessUpload(imagePath string, userID int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if userID != senderID && userID != receiverID {
+	if userID == senderID {
+		return true, nil
+	}
+
+	if userID != receiverID {
 		return false, nil
 	}
 

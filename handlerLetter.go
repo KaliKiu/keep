@@ -98,7 +98,7 @@ func HandleViewLetter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !letter.IsUnlocked && letter.UnlockType != "mutual_ready" {
+	if !letter.IsSender && !letter.IsUnlocked && letter.UnlockType != "mutual_ready" {
 		http.Redirect(w, r, "/?tab=inbox&err=Letter+is+still+sealed", http.StatusSeeOther)
 		return
 	}
