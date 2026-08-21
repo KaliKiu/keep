@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	neturl "net/url"
 	"os"
 
 	webpush "github.com/SherClockHolmes/webpush-go"
@@ -71,6 +72,17 @@ func SendPushNotification(userID int, title, body, url string) error {
 				P256dh: p256dh,
 				Auth:   auth,
 			},
+		}
+		parsedEndpoint, err := neturl.Parse(endpoint)
+		if err != nil {
+			log.Printf("failed parsing push endpoint for user %d: %v", userID, err)
+		} else {
+			log.Printf(
+				"push target for user %d: scheme=%s host=%s",
+				userID,
+				parsedEndpoint.Scheme,
+				parsedEndpoint.Host,
+			)
 		}
 
 		response, err := webpush.SendNotification(
