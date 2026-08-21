@@ -299,15 +299,6 @@ func HandleAddPartner(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/?tab=profile", http.StatusSeeOther)
 }
 
-func HandleRemovePartner(w http.ResponseWriter, r *http.Request) {
-	cookie, _ := r.Cookie("keep_session")
-	username, _ := getSessionUsername(cookie.Value)
-	user, _ := GetUserByUsername(username)
-
-	RemovePartnership(user.ID)
-	http.Redirect(w, r, "/?tab=profile", http.StatusSeeOther)
-}
-
 func HandleNotificationSubscribe(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -323,11 +314,21 @@ func HandleNotificationSubscribe(w http.ResponseWriter, r *http.Request) {
 
 	var sub PushSubscription
 
-	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10))
+	decoder := json.NewDecoder(
+		http.MaxBytesReader(w, r.Body, 16<<10),
+	)
 
 	if err := decoder.Decode(&sub); err != nil {
-		log.Printf("push subscription rejected for user %d: invalid payload", user.ID)
-		http.Error(w, "Invalid subscription", http.StatusBadRequest)
+		log.Printf(
+			"push subscription rejected for user %d: invalid payload",
+			user.ID,
+		)
+
+		http.Error(
+			w,
+			"Invalid subscription",
+			http.StatusBadRequest,
+		)
 		return
 	}
 
@@ -335,12 +336,47 @@ func HandleNotificationSubscribe(w http.ResponseWriter, r *http.Request) {
 		sub.Keys.P256DH == "" ||
 		sub.Keys.Auth == "" {
 
-		log.Printf("push subscription rejected for user %d: incomplete payload", user.ID)
-		http.Error(w, "Incomplete subscription", http.StatusBadRequest)
+		log.Printf(
+			"push subscription rejected for user %d: incomplete payload",
+			user.ID,
+		)
+
+		http.Error(
+			w,
+			"Incomplete subscription",
+			http.StatusBadRequest,
+		)
 		return
 	}
 
-	_, err := db.Exec(`
+	// Remove older subscriptions previously associated with this account.
+	if _, err := db.Exec(`
+		DELETE FROM push_subscriptions
+		WHERE user_id = ?
+		  AND endpoint != ?
+	`,
+		user.ID,
+		sub.Endpoint,
+	); err != nil {
+
+		log.Printf(
+			"failed cleaning old push subscriptions for user %d: %v",
+			user.ID,
+			err,
+		)
+
+		http.Error(
+			w,
+			"Failed to save subscription",
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	// Store the current browser/device subscription.
+	// If this endpoint previously belonged to another account,
+	// reassign it to the currently logged-in user.
+	if _, err := db.Exec(`
 		INSERT INTO push_subscriptions (
 			user_id,
 			endpoint,
@@ -357,15 +393,26 @@ func HandleNotificationSubscribe(w http.ResponseWriter, r *http.Request) {
 		sub.Endpoint,
 		sub.Keys.P256DH,
 		sub.Keys.Auth,
-	)
+	); err != nil {
 
-	if err != nil {
-		log.Printf("failed saving push subscription for user %d: %v", user.ID, err)
-		http.Error(w, "Failed to save subscription", http.StatusInternalServerError)
+		log.Printf(
+			"failed saving push subscription for user %d: %v",
+			user.ID,
+			err,
+		)
+
+		http.Error(
+			w,
+			"Failed to save subscription",
+			http.StatusInternalServerError,
+		)
 		return
 	}
 
-	log.Printf("push subscription saved for user %d", user.ID)
+	log.Printf(
+		"push subscription saved for user %d",
+		user.ID,
+	)
 
 	w.WriteHeader(http.StatusNoContent)
 }
