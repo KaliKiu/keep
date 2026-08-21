@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 )
@@ -15,41 +17,67 @@ func HandleWriteLetter(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	cookie, _ := r.Cookie("keep_session")
-	username, _ := getSessionUsername(cookie.Value)
-	user, _ := GetUserByUsername(username)
-	partnerInfo, _ := GetPartnershipInfo(user.ID)
+
+	user, ok := authenticatedUser(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	partnerInfo, err := GetPartnershipInfo(user.ID)
+	if err != nil {
+		log.Printf("failed loading partnership for user %d: %v", user.ID, err)
+		http.Error(w, "Failed to load partnership", http.StatusInternalServerError)
+		return
+	}
 
 	if !partnerInfo.HasPartner || partnerInfo.IsPending {
 		http.Redirect(w, r, "/?err=no_active_partner", http.StatusSeeOther)
 		return
 	}
 
-	r.ParseMultipartForm(10 << 20)
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		return
+	}
+
 	requestID := r.FormValue("request_id")
 	if requestID == "" {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
+
 	title := r.FormValue("title")
 	content := r.FormValue("content")
 	unlockType := r.FormValue("unlock_type")
 
 	var unlockAt *time.Time
+
 	if unlockType == "date" {
 		dateStr := r.FormValue("unlock_date")
+
 		parsedTime, err := time.Parse("2006-01-02T15:04", dateStr)
-		if err == nil {
-			offset, _ := strconv.Atoi(r.FormValue("tz_offset"))
-			parsedTime = parsedTime.Add(time.Duration(offset) * time.Minute)
-			unlockAt = &parsedTime
+		if err != nil {
+			http.Error(w, "Invalid unlock date", http.StatusBadRequest)
+			return
 		}
-	} else if unlockType == "random" {
-		daysStr := r.FormValue("random_days")
-		days, _ := strconv.Atoi(daysStr)
-		if days == 0 {
+
+		offset, err := strconv.Atoi(r.FormValue("tz_offset"))
+		if err != nil {
+			http.Error(w, "Invalid timezone offset", http.StatusBadRequest)
+			return
+		}
+
+		parsedTime = parsedTime.Add(time.Duration(offset) * time.Minute)
+		unlockAt = &parsedTime
+	}
+
+	if unlockType == "random" {
+		days, err := strconv.Atoi(r.FormValue("random_days"))
+		if err != nil || days <= 0 {
 			days = 7
 		}
+
 		randomSeconds := rand.Int63n(int64(days * 24 * 60 * 60))
 		t := time.Now().UTC().Add(time.Duration(randomSeconds) * time.Second)
 		unlockAt = &t
@@ -61,18 +89,83 @@ func HandleWriteLetter(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var imagePath string
+
 	file, header, err := r.FormFile("image")
 	if err == nil {
 		defer file.Close()
-		os.MkdirAll("uploads", os.ModePerm)
-		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), header.Filename)
-		out, _ := os.Create("uploads/" + filename)
+
+		if err := os.MkdirAll("uploads", 0755); err != nil {
+			log.Printf("failed creating uploads directory: %v", err)
+			http.Error(w, "Failed to save upload", http.StatusInternalServerError)
+			return
+		}
+
+		filename := fmt.Sprintf(
+			"%d_%s",
+			time.Now().UnixNano(),
+			filepath.Base(header.Filename),
+		)
+
+		fullPath := filepath.Join("uploads", filename)
+
+		out, err := os.Create(fullPath)
+		if err != nil {
+			log.Printf("failed creating upload file: %v", err)
+			http.Error(w, "Failed to save upload", http.StatusInternalServerError)
+			return
+		}
+
 		defer out.Close()
-		io.Copy(out, file)
+
+		if _, err := io.Copy(out, file); err != nil {
+			log.Printf("failed saving upload: %v", err)
+			http.Error(w, "Failed to save upload", http.StatusInternalServerError)
+			return
+		}
+
 		imagePath = "/uploads/" + filename
 	}
 
-	CreateLetter(user.ID, partnerInfo.PartnerID, requestID, title, content, emoji, unlockType, unlockAt, nil, imagePath, "")
+	created, err := CreateLetter(
+		user.ID,
+		partnerInfo.PartnerID,
+		requestID,
+		title,
+		content,
+		emoji,
+		unlockType,
+		unlockAt,
+		nil,
+		imagePath,
+		"",
+	)
+
+	if err != nil {
+		log.Printf("failed creating letter for user %d: %v", user.ID, err)
+		http.Error(w, "Failed to send letter", http.StatusInternalServerError)
+		return
+	}
+
+	if !created {
+		http.Redirect(w, r, "/?tab=history_tx", http.StatusSeeOther)
+		return
+	}
+
+	go func(receiverID int, senderName string) {
+		if err := SendPushNotification(
+			receiverID,
+			"keep. 💌",
+			senderName+" sent you a new letter.",
+			"/?tab=inbox",
+		); err != nil {
+			log.Printf(
+				"letter push failed for receiver %d: %v",
+				receiverID,
+				err,
+			)
+		}
+	}(partnerInfo.PartnerID, user.Username)
+
 	http.Redirect(w, r, "/?tab=history_tx", http.StatusSeeOther)
 }
 
@@ -136,34 +229,136 @@ func HandleReplyLetter(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	cookie, _ := r.Cookie("keep_session")
-	username, _ := getSessionUsername(cookie.Value)
-	user, _ := GetUserByUsername(username)
-	partnerInfo, _ := GetPartnershipInfo(user.ID)
 
-	r.ParseMultipartForm(10 << 20)
+	user, ok := authenticatedUser(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	partnerInfo, err := GetPartnershipInfo(user.ID)
+	if err != nil {
+		log.Printf("failed loading partnership for user %d: %v", user.ID, err)
+		http.Error(w, "Failed to load partnership", http.StatusInternalServerError)
+		return
+	}
+
+	if !partnerInfo.HasPartner || partnerInfo.IsPending {
+		http.Error(w, "No active partner", http.StatusBadRequest)
+		return
+	}
+
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		return
+	}
+
 	requestID := r.FormValue("request_id")
 	if requestID == "" {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
-	parentID, _ := strconv.Atoi(r.FormValue("parent_id"))
+
+	parentID, err := strconv.Atoi(r.FormValue("parent_id"))
+	if err != nil {
+		http.Error(w, "Invalid parent letter", http.StatusBadRequest)
+		return
+	}
+
 	content := r.FormValue("content")
 	emoji := "💬"
 
 	var imagePath string
+
 	file, header, err := r.FormFile("image")
 	if err == nil {
 		defer file.Close()
-		os.MkdirAll("uploads", os.ModePerm)
-		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), header.Filename)
-		out, _ := os.Create("uploads/" + filename)
+
+		if err := os.MkdirAll("uploads", 0755); err != nil {
+			log.Printf("failed creating uploads directory: %v", err)
+			http.Error(w, "Failed to save upload", http.StatusInternalServerError)
+			return
+		}
+
+		filename := fmt.Sprintf(
+			"%d_%s",
+			time.Now().UnixNano(),
+			filepath.Base(header.Filename),
+		)
+
+		fullPath := filepath.Join("uploads", filename)
+
+		out, err := os.Create(fullPath)
+		if err != nil {
+			log.Printf("failed creating reply upload: %v", err)
+			http.Error(w, "Failed to save upload", http.StatusInternalServerError)
+			return
+		}
+
 		defer out.Close()
-		io.Copy(out, file)
+
+		if _, err := io.Copy(out, file); err != nil {
+			log.Printf("failed saving reply upload: %v", err)
+			http.Error(w, "Failed to save upload", http.StatusInternalServerError)
+			return
+		}
+
 		imagePath = "/uploads/" + filename
 	}
 
-	CreateLetter(user.ID, partnerInfo.PartnerID, requestID, "Reply", content, emoji, "instant", nil, &parentID, imagePath, user.Username)
-	UpdateParentWithReply(parentID, user.Username)
-	http.Redirect(w, r, "/letter/view?id="+r.FormValue("parent_id"), http.StatusSeeOther)
+	created, err := CreateLetter(
+		user.ID,
+		partnerInfo.PartnerID,
+		requestID,
+		"Reply",
+		content,
+		emoji,
+		"instant",
+		nil,
+		&parentID,
+		imagePath,
+		user.Username,
+	)
+
+	if err != nil {
+		log.Printf("failed creating reply for user %d: %v", user.ID, err)
+		http.Error(w, "Failed to send reply", http.StatusInternalServerError)
+		return
+	}
+
+	if !created {
+		http.Redirect(
+			w,
+			r,
+			"/letter/view?id="+strconv.Itoa(parentID),
+			http.StatusSeeOther,
+		)
+		return
+	}
+
+	if err := UpdateParentWithReply(parentID, user.Username); err != nil {
+		log.Printf("failed updating parent letter %d: %v", parentID, err)
+	}
+
+	go func(receiverID, parentLetterID int, senderName string) {
+		if err := SendPushNotification(
+			receiverID,
+			"keep. 💬",
+			senderName+" replied to your letter.",
+			"/letter/view?id="+strconv.Itoa(parentLetterID),
+		); err != nil {
+			log.Printf(
+				"reply push failed for receiver %d: %v",
+				receiverID,
+				err,
+			)
+		}
+	}(partnerInfo.PartnerID, parentID, user.Username)
+
+	http.Redirect(
+		w,
+		r,
+		"/letter/view?id="+strconv.Itoa(parentID),
+		http.StatusSeeOther,
+	)
 }
