@@ -42,11 +42,7 @@ func main() {
 	http.HandleFunc("/notifications/subscribe", HandleNotificationSubscribe)
 	http.HandleFunc("/notifications/test", HandleNotificationTest)
 
-	http.HandleFunc("/service-worker.js", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/javascript")
-		http.ServeFile(w, r, "static/service-worker.js")
-	})
-
+	http.HandleFunc("/service-worker.js", HandleServiceWorker)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/uploads/", HandleUpload)
 

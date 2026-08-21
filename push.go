@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,26 +12,28 @@ import (
 	webpush "github.com/SherClockHolmes/webpush-go"
 )
 
+type pushPayload struct {
+	Title string `json:"title"`
+	Body  string `json:"body"`
+	URL   string `json:"url"`
+}
+
 func SendPushNotification(userID int, title, body, url string) error {
 	publicKey := os.Getenv("VAPID_PUBLIC_KEY")
 	privateKey := os.Getenv("VAPID_PRIVATE_KEY")
 	subscriber := os.Getenv("VAPID_SUBSCRIBER")
 
-	if publicKey == "" || privateKey == "" {
-		return fmt.Errorf("VAPID keys are not configured")
+	if publicKey == "" || privateKey == "" || subscriber == "" {
+		return errors.New("web push is not configured")
 	}
 
-	if subscriber == "" {
-		return fmt.Errorf("VAPID_SUBSCRIBER is not configured")
-	}
-
-	payload, err := json.Marshal(map[string]string{
-		"title": title,
-		"body":  body,
-		"url":   url,
+	payload, err := json.Marshal(pushPayload{
+		Title: title,
+		Body:  body,
+		URL:   url,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("encode push payload: %w", err)
 	}
 
 	rows, err := db.Query(`
@@ -39,17 +42,24 @@ func SendPushNotification(userID int, title, body, url string) error {
 		WHERE user_id = ?
 	`, userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("query push subscriptions: %w", err)
 	}
 	defer rows.Close()
 
+	var (
+		sentCount   int
+		failedCount int
+	)
+
 	for rows.Next() {
-		var endpoint string
-		var p256dh string
-		var auth string
+		var (
+			endpoint string
+			p256dh   string
+			auth     string
+		)
 
 		if err := rows.Scan(&endpoint, &p256dh, &auth); err != nil {
-			return err
+			return fmt.Errorf("scan push subscription: %w", err)
 		}
 
 		subscription := &webpush.Subscription{
@@ -72,27 +82,67 @@ func SendPushNotification(userID int, title, body, url string) error {
 		)
 
 		if err != nil {
-			log.Printf("Push send failed: %v", err)
+			failedCount++
+			log.Printf("push delivery failed for user %d: %v", userID, err)
 			continue
 		}
 
-		io.Copy(io.Discard, response.Body)
+		_, _ = io.Copy(io.Discard, response.Body)
 		response.Body.Close()
 
-		log.Printf("Push response for user %d: %s", userID, response.Status)
+		switch response.StatusCode {
+		case http.StatusCreated,
+			http.StatusOK,
+			http.StatusAccepted,
+			http.StatusNoContent:
 
-		// Subscription no longer exists on that device.
-		if response.StatusCode == http.StatusGone ||
-			response.StatusCode == http.StatusNotFound {
+			sentCount++
 
-			_, _ = db.Exec(`
-				DELETE FROM push_subscriptions
-				WHERE endpoint = ?
-			`, endpoint)
+		case http.StatusGone,
+			http.StatusNotFound:
 
-			log.Printf("Removed expired push subscription")
+			if err := deletePushSubscription(endpoint); err != nil {
+				log.Printf(
+					"failed removing expired subscription for user %d: %v",
+					userID,
+					err,
+				)
+			}
+
+		default:
+			failedCount++
+
+			log.Printf(
+				"push service returned status %d for user %d",
+				response.StatusCode,
+				userID,
+			)
 		}
 	}
 
-	return rows.Err()
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate push subscriptions: %w", err)
+	}
+
+	if sentCount == 0 && failedCount > 0 {
+		return fmt.Errorf("all push deliveries failed")
+	}
+
+	log.Printf(
+		"push delivery finished for user %d: %d sent, %d failed",
+		userID,
+		sentCount,
+		failedCount,
+	)
+
+	return nil
+}
+
+func deletePushSubscription(endpoint string) error {
+	_, err := db.Exec(`
+		DELETE FROM push_subscriptions
+		WHERE endpoint = ?
+	`, endpoint)
+
+	return err
 }

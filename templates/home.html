@@ -464,10 +464,8 @@
     </script>
     <script>
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("/service-worker.js")
-                .then(registration => {
-                    console.log("Service worker registered:", registration);
-                })
+            navigator.serviceWorker
+                .register("/service-worker.js")
                 .catch(error => {
                     console.error("Service worker registration failed:", error);
                 });
@@ -493,31 +491,29 @@
         if (notificationBtn) {
             notificationBtn.addEventListener("click", async () => {
                 try {
-                    if (!("Notification" in window)) {
+                    if (
+                        !("Notification" in window) ||
+                        !("serviceWorker" in navigator) ||
+                        !("PushManager" in window)
+                    ) {
                         alert("Notifications are not supported on this device.");
                         return;
                     }
 
-                    if (!("serviceWorker" in navigator)) {
-                        alert("Service workers are not supported on this device.");
-                        return;
-                    }
-                    console.log("NOTIFY 1: button clicked");
                     const permission = await Notification.requestPermission();
-                    console.log("NOTIFY 2: permission =", permission);
+
                     if (permission !== "granted") {
                         alert("Notification permission was not granted.");
                         return;
                     }
 
                     const registration = await navigator.serviceWorker.ready;
-                    console.log("NOTIFY 3: service worker ready", registration);
 
-                    const publicKey = "BML4081toBRSkNOYv09FnDB9VKlB-UDJwN4rg679nlbF-nZEXzvS0dS3c21xsFXCUWexS4oqfMM_kVbrrlGJhs4";
+                    const publicKey =
+                        "BML4081toBRSkNOYv09FnDB9VKlB-UDJwN4rg679nlbF-nZEXzvS0dS3c21xsFXCUWexS4oqfMM_kVbrrlGJhs4";
 
                     let subscription =
                         await registration.pushManager.getSubscription();
-                    console.log("NOTIFY 4: existing subscription =", subscription);
 
                     if (!subscription) {
                         subscription =
@@ -526,7 +522,6 @@
                                 applicationServerKey:
                                     urlBase64ToUint8Array(publicKey)
                             });
-                             console.log("NOTIFY 5: new subscription =", subscription);
                     }
 
                     const response = await fetch("/notifications/subscribe", {
@@ -536,19 +531,20 @@
                         },
                         body: JSON.stringify(subscription)
                     });
-                    console.log("NOTIFY 7: response status =", response.status);
-                    console.log("NOTIFY 8: response text =", await response.text());
+
                     if (!response.ok) {
-                        throw new Error("Failed to save subscription on server");
+                        throw new Error(
+                            `Subscription request failed: ${response.status}`
+                        );
                     }
 
-                    console.log("Push subscription saved:");
-                    console.log(JSON.stringify(subscription));
+                    notificationBtn.textContent = "✓";
+                    notificationBtn.title = "Notifications enabled";
 
                     alert("Notifications enabled!");
                 } catch (error) {
-                    console.error("Push subscription failed:", error);
-                    alert("Could not enable push notifications.");
+                    console.error("Failed to enable notifications:", error);
+                    alert("Could not enable notifications.");
                 }
             });
         }

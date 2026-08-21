@@ -16,7 +16,7 @@ func HandleWriteLetter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cookie, _ := r.Cookie("keep_session")
-	username, _ := sessions[cookie.Value]
+	username, _ := getSessionUsername(cookie.Value)
 	user, _ := GetUserByUsername(username)
 	partnerInfo, _ := GetPartnershipInfo(user.ID)
 
@@ -82,7 +82,7 @@ func HandleViewLetter(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-	username, _ := sessions[cookie.Value]
+	username, _ := getSessionUsername(cookie.Value)
 	user, _ := GetUserByUsername(username)
 
 	letterIDStr := r.URL.Query().Get("id")
@@ -123,7 +123,7 @@ func HandleReadyLetter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cookie, _ := r.Cookie("keep_session")
-	username, _ := sessions[cookie.Value]
+	username, _ := getSessionUsername(cookie.Value)
 	user, _ := GetUserByUsername(username)
 
 	letterID, _ := strconv.Atoi(r.FormValue("id"))
@@ -137,7 +137,7 @@ func HandleReplyLetter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cookie, _ := r.Cookie("keep_session")
-	username, _ := sessions[cookie.Value]
+	username, _ := getSessionUsername(cookie.Value)
 	user, _ := GetUserByUsername(username)
 	partnerInfo, _ := GetPartnershipInfo(user.ID)
 

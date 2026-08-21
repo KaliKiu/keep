@@ -1,8 +1,8 @@
 .env
 keep.dbkeep.db
-.env
 keep.db
 uploads/
 notes.txt
 backups/
 scripts/
+app.log

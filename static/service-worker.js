@@ -1,35 +1,41 @@
+const DEFAULT_NOTIFICATION = {
+	title: "keep. 💌",
+	body: "You have a new notification.",
+	url: "/"
+};
+
 self.addEventListener("install", () => {
-	console.log("keep. service worker installed");
 	self.skipWaiting();
 });
 
 self.addEventListener("activate", event => {
-	console.log("keep. service worker activated");
-
 	event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener("push", event => {
-	let data = {
-		title: "keep. 💌",
-		body: "You have a new notification.",
-		url: "/"
-	};
+	let notification = { ...DEFAULT_NOTIFICATION };
 
 	if (event.data) {
 		try {
-			data = event.data.json();
+			const payload = event.data.json();
+
+			notification = {
+				title: payload.title || DEFAULT_NOTIFICATION.title,
+				body: payload.body || DEFAULT_NOTIFICATION.body,
+				url: payload.url || DEFAULT_NOTIFICATION.url
+			};
 		} catch {
-			data.body = event.data.text();
+			notification.body = event.data.text() || DEFAULT_NOTIFICATION.body;
 		}
 	}
 
 	event.waitUntil(
-		self.registration.showNotification(data.title || "keep. 💌", {
-			body: data.body || "You have a new notification.",
+		self.registration.showNotification(notification.title, {
+			body: notification.body,
 			icon: "/static/sunflower.png",
+			badge: "/static/sunflower.png",
 			data: {
-				url: data.url || "/"
+				url: notification.url
 			}
 		})
 	);
@@ -38,21 +44,22 @@ self.addEventListener("push", event => {
 self.addEventListener("notificationclick", event => {
 	event.notification.close();
 
-	const url = event.notification.data?.url || "/";
+	const targetURL = event.notification.data?.url || "/";
 
 	event.waitUntil(
-		clients.matchAll({
-			type: "window",
-			includeUncontrolled: true
-		}).then(windowClients => {
-			for (const client of windowClients) {
-				if ("focus" in client) {
-					client.navigate(url);
-					return client.focus();
+		self.clients
+			.matchAll({
+				type: "window",
+				includeUncontrolled: true
+			})
+			.then(windowClients => {
+				for (const client of windowClients) {
+					if ("navigate" in client) {
+						return client.navigate(targetURL).then(() => client.focus());
+					}
 				}
-			}
 
-			return clients.openWindow(url);
-		})
+				return self.clients.openWindow(targetURL);
+			})
 	);
 });

@@ -73,12 +73,19 @@ func InitDB(dbPath string) {
 		endpoint TEXT NOT NULL UNIQUE,
 		p256dh TEXT NOT NULL,
 		auth TEXT NOT NULL,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-	);`
-	_, err = db.Exec(queryPushSubscriptions)
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-	if err != nil {
+		FOREIGN KEY(user_id) REFERENCES users(id)
+	);`
+
+	if _, err := db.Exec(queryPushSubscriptions); err != nil {
 		log.Fatal("Failed creating push_subscriptions table:", err)
+	}
+	if _, err := db.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user
+		ON push_subscriptions(user_id)
+	`); err != nil {
+		log.Fatal("Failed creating push subscription index:", err)
 	}
 
 	// Migrations for existing databases
