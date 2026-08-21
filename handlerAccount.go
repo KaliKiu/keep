@@ -370,6 +370,59 @@ func HandleNotificationSubscribe(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func HandleNotificationUnsubscribe(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	user, ok := authenticatedUser(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var sub PushSubscription
+
+	if err := json.NewDecoder(
+		http.MaxBytesReader(w, r.Body, 16<<10),
+	).Decode(&sub); err != nil {
+		http.Error(w, "Invalid subscription", http.StatusBadRequest)
+		return
+	}
+
+	if sub.Endpoint == "" {
+		http.Error(w, "Invalid subscription", http.StatusBadRequest)
+		return
+	}
+
+	_, err := db.Exec(`
+		DELETE FROM push_subscriptions
+		WHERE endpoint = ?
+		  AND user_id = ?
+	`,
+		sub.Endpoint,
+		user.ID,
+	)
+
+	if err != nil {
+		log.Printf(
+			"failed removing push subscription for user %d: %v",
+			user.ID,
+			err,
+		)
+
+		http.Error(
+			w,
+			"Failed to remove subscription",
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func HandleNotificationTest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
