@@ -81,6 +81,7 @@ func SendPushNotification(userID int, title, body, url string) error {
 				VAPIDPublicKey:  publicKey,
 				VAPIDPrivateKey: privateKey,
 				TTL:             60,
+				AuthScheme:      webpush.WebPush,
 			},
 		)
 
