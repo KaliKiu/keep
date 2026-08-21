@@ -40,6 +40,12 @@ func main() {
 	http.HandleFunc("/letter/reply", HandleReplyLetter)
 	http.HandleFunc("/profile/update", HandleUpdateProfile)
 	http.HandleFunc("/notifications/subscribe", HandleNotificationSubscribe)
+	http.HandleFunc("/notifications/test", HandleNotificationTest)
+
+	http.HandleFunc("/service-worker.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		http.ServeFile(w, r, "static/service-worker.js")
+	})
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/uploads/", HandleUpload)

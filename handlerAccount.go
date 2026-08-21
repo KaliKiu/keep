@@ -229,34 +229,49 @@ func HandleRemovePartner(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleNotificationSubscribe(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("PUSH 1: HandleNotificationSubscribe HIT")
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	cookie, err := r.Cookie("session")
+	cookie, err := r.Cookie("keep_session")
 	if err != nil {
+		fmt.Println("PUSH ERROR: keep_session cookie missing:", err)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	username := sessions[cookie.Value]
+	username, exists := sessions[cookie.Value]
+	if !exists {
+		fmt.Println("PUSH ERROR: session token not found")
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	user, err := GetUserByUsername(username)
 	if err != nil {
+		fmt.Println("PUSH ERROR: user lookup:", err)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+
+	fmt.Println("PUSH 2: authenticated user:", user.ID, user.Username)
 
 	var sub PushSubscription
 
 	err = json.NewDecoder(r.Body).Decode(&sub)
 	if err != nil {
+		fmt.Println("PUSH ERROR: JSON decode:", err)
 		http.Error(w, "Invalid subscription", http.StatusBadRequest)
 		return
 	}
 
+	fmt.Println("PUSH 3: endpoint:", sub.Endpoint)
+
 	if sub.Endpoint == "" || sub.Keys.P256DH == "" || sub.Keys.Auth == "" {
+		fmt.Println("PUSH ERROR: incomplete subscription")
 		http.Error(w, "Incomplete subscription", http.StatusBadRequest)
 		return
 	}
@@ -281,7 +296,50 @@ func HandleNotificationSubscribe(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
+		fmt.Println("PUSH ERROR: DB insert:", err)
 		http.Error(w, "Failed to save subscription", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("PUSH 4: SUBSCRIPTION SAVED ✅")
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func HandleNotificationTest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cookie, err := r.Cookie("keep_session")
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	username, exists := sessions[cookie.Value]
+	if !exists {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := GetUserByUsername(username)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	err = SendPushNotification(
+		user.ID,
+		"keep. 🌻",
+		"Web Push is working!",
+		"/?tab=inbox",
+	)
+
+	if err != nil {
+		fmt.Println("TEST PUSH ERROR:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
