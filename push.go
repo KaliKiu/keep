@@ -49,9 +49,12 @@ func SendPushNotification(userID int, title, body, url string) error {
 	var (
 		sentCount   int
 		failedCount int
+		foundCount  int
 	)
 
 	for rows.Next() {
+		foundCount++
+
 		var (
 			endpoint string
 			p256dh   string
@@ -83,40 +86,62 @@ func SendPushNotification(userID int, title, body, url string) error {
 
 		if err != nil {
 			failedCount++
-			log.Printf("push delivery failed for user %d: %v", userID, err)
+
+			log.Printf(
+				"push request failed for user %d: %v",
+				userID,
+				err,
+			)
+
 			continue
 		}
 
-		_, _ = io.Copy(io.Discard, response.Body)
+		responseBody, readErr := io.ReadAll(response.Body)
 		response.Body.Close()
 
-		switch response.StatusCode {
-		case http.StatusCreated,
-			http.StatusOK,
-			http.StatusAccepted,
-			http.StatusNoContent:
+		if readErr != nil {
+			log.Printf(
+				"failed reading push response for user %d: %v",
+				userID,
+				readErr,
+			)
+		}
 
+		if response.StatusCode >= 200 && response.StatusCode < 300 {
 			sentCount++
 
-		case http.StatusGone,
-			http.StatusNotFound:
+			log.Printf(
+				"push delivered for user %d: status=%d",
+				userID,
+				response.StatusCode,
+			)
 
+			continue
+		}
+
+		failedCount++
+
+		log.Printf(
+			"push service rejected request for user %d: status=%d body=%q",
+			userID,
+			response.StatusCode,
+			string(responseBody),
+		)
+
+		switch response.StatusCode {
+		case http.StatusGone, http.StatusNotFound:
 			if err := deletePushSubscription(endpoint); err != nil {
 				log.Printf(
-					"failed removing expired subscription for user %d: %v",
+					"failed removing expired push subscription for user %d: %v",
 					userID,
 					err,
 				)
+			} else {
+				log.Printf(
+					"removed expired push subscription for user %d",
+					userID,
+				)
 			}
-
-		default:
-			failedCount++
-
-			log.Printf(
-				"push service returned status %d for user %d",
-				response.StatusCode,
-				userID,
-			)
 		}
 	}
 
@@ -124,8 +149,13 @@ func SendPushNotification(userID int, title, body, url string) error {
 		return fmt.Errorf("iterate push subscriptions: %w", err)
 	}
 
-	if sentCount == 0 && failedCount > 0 {
-		return fmt.Errorf("all push deliveries failed")
+	if foundCount == 0 {
+		log.Printf(
+			"no push subscriptions found for user %d",
+			userID,
+		)
+
+		return nil
 	}
 
 	log.Printf(
@@ -134,6 +164,10 @@ func SendPushNotification(userID int, title, body, url string) error {
 		sentCount,
 		failedCount,
 	)
+
+	if sentCount == 0 && failedCount > 0 {
+		return errors.New("all push deliveries failed")
+	}
 
 	return nil
 }

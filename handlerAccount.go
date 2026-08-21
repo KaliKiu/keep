@@ -133,7 +133,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 func HandleLogout(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("keep_session")
 	if err == nil {
-		delete(sessions, cookie.Value)
+		deleteSession(cookie.Value)
 		http.SetCookie(w, &http.Cookie{Name: "keep_session", Value: "", Path: "/", MaxAge: -1})
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -296,6 +296,36 @@ func HandleAddPartner(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/?tab=profile&err="+err.Error(), http.StatusSeeOther)
 		return
 	}
+	http.Redirect(w, r, "/?tab=profile", http.StatusSeeOther)
+}
+
+func HandleRemovePartner(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	user, ok := authenticatedUser(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if err := RemovePartnership(user.ID); err != nil {
+		log.Printf(
+			"failed removing partnership for user %d: %v",
+			user.ID,
+			err,
+		)
+
+		http.Error(
+			w,
+			"Failed to remove partnership",
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
 	http.Redirect(w, r, "/?tab=profile", http.StatusSeeOther)
 }
 
