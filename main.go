@@ -24,6 +24,7 @@ func main() {
 	if dbPath == "" {
 		dbPath = "keep.db"
 	}
+	log.Printf("VAPID subscriber: %q", os.Getenv("VAPID_SUBSCRIBER"))
 
 	InitDB(dbPath)
 	LoadTranslations()

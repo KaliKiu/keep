@@ -379,33 +379,6 @@ func HandleNotificationSubscribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Remove older subscriptions previously associated with this account.
-	if _, err := db.Exec(`
-		DELETE FROM push_subscriptions
-		WHERE user_id = ?
-		  AND endpoint != ?
-	`,
-		user.ID,
-		sub.Endpoint,
-	); err != nil {
-
-		log.Printf(
-			"failed cleaning old push subscriptions for user %d: %v",
-			user.ID,
-			err,
-		)
-
-		http.Error(
-			w,
-			"Failed to save subscription",
-			http.StatusInternalServerError,
-		)
-		return
-	}
-
-	// Store the current browser/device subscription.
-	// If this endpoint previously belonged to another account,
-	// reassign it to the currently logged-in user.
 	if _, err := db.Exec(`
 		INSERT INTO push_subscriptions (
 			user_id,
