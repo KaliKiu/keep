@@ -57,4 +57,13 @@ type Letter struct {
 	LatestReplyRead     bool
 }
 
+type PushSubscription struct {
+	Endpoint string `json:"endpoint"`
+
+	Keys struct {
+		P256DH string `json:"p256dh"`
+		Auth   string `json:"auth"`
+	} `json:"keys"`
+}
+
 //struct for each html data to be passed to the template

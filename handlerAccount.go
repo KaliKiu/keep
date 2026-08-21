@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -225,4 +226,64 @@ func HandleRemovePartner(w http.ResponseWriter, r *http.Request) {
 
 	RemovePartnership(user.ID)
 	http.Redirect(w, r, "/?tab=profile", http.StatusSeeOther)
+}
+
+func HandleNotificationSubscribe(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cookie, err := r.Cookie("session")
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	username := sessions[cookie.Value]
+
+	user, err := GetUserByUsername(username)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var sub PushSubscription
+
+	err = json.NewDecoder(r.Body).Decode(&sub)
+	if err != nil {
+		http.Error(w, "Invalid subscription", http.StatusBadRequest)
+		return
+	}
+
+	if sub.Endpoint == "" || sub.Keys.P256DH == "" || sub.Keys.Auth == "" {
+		http.Error(w, "Incomplete subscription", http.StatusBadRequest)
+		return
+	}
+
+	_, err = db.Exec(`
+		INSERT INTO push_subscriptions (
+			user_id,
+			endpoint,
+			p256dh,
+			auth
+		)
+		VALUES (?, ?, ?, ?)
+		ON CONFLICT(endpoint) DO UPDATE SET
+			user_id = excluded.user_id,
+			p256dh = excluded.p256dh,
+			auth = excluded.auth
+	`,
+		user.ID,
+		sub.Endpoint,
+		sub.Keys.P256DH,
+		sub.Keys.Auth,
+	)
+
+	if err != nil {
+		http.Error(w, "Failed to save subscription", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

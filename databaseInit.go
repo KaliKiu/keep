@@ -66,6 +66,21 @@ func InitDB(dbPath string) {
 	);`
 	db.Exec(queryLetters)
 
+	queryPushSubscriptions := `
+	CREATE TABLE IF NOT EXISTS push_subscriptions (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		endpoint TEXT NOT NULL UNIQUE,
+		p256dh TEXT NOT NULL,
+		auth TEXT NOT NULL,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);`
+	_, err = db.Exec(queryPushSubscriptions)
+
+	if err != nil {
+		log.Fatal("Failed creating push_subscriptions table:", err)
+	}
+
 	// Migrations for existing databases
 	db.Exec("ALTER TABLE letters ADD COLUMN is_read BOOLEAN DEFAULT 0")
 	db.Exec("ALTER TABLE letters ADD COLUMN emoji TEXT DEFAULT '💌'")

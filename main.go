@@ -39,6 +39,7 @@ func main() {
 	http.HandleFunc("/letter/ready", HandleReadyLetter)
 	http.HandleFunc("/letter/reply", HandleReplyLetter)
 	http.HandleFunc("/profile/update", HandleUpdateProfile)
+	http.HandleFunc("/notifications/subscribe", HandleNotificationSubscribe)
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/uploads/", HandleUpload)

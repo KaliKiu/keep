@@ -253,7 +253,26 @@
                         
                         <button onclick="document.getElementById('editProfileForm').style.display='block'" style="background: transparent; border: 1px dashed var(--border-color); color: var(--text-muted); padding: 8px; font-size: 12px; margin-top: 15px; width: 100%;">{{T "profile.edit-btn"}}</button>
                     </div>
-
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+                        <button
+                            id="notification-btn"
+                            type="button"
+                            title="Enable notifications"
+                            style="
+                                width: 46px;
+                                height: 46px;
+                                border-radius: 50%;
+                                padding: 0;
+                                margin: 0;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 20px;
+                            "
+                        >
+                            🔔
+                        </button>
+                    </div>
                     <!-- 2. PARTNER PROFILE -->
                     {{ if .Partner.HasPartner }}
                         <div style="background: #1f1c19; border: 1px solid var(--border-color); padding: 25px 20px; border-radius: 24px; text-align: center;">
@@ -439,6 +458,93 @@
                 sendButton.textContent = '{{T "write.sending-btn"}}';
                 sendButton.style.opacity = "0.6";
                 sendButton.style.cursor = "wait";
+            });
+        }
+    </script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("/static/service-worker.js")
+                .then(registration => {
+                    console.log("Service worker registered:", registration);
+                })
+                .catch(error => {
+                    console.error("Service worker registration failed:", error);
+                });
+        }
+    </script>
+    <script>
+        function urlBase64ToUint8Array(base64String) {
+            const padding = "=".repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding)
+                .replace(/-/g, "+")
+                .replace(/_/g, "/");
+
+            const rawData = window.atob(base64);
+
+            return Uint8Array.from(
+                [...rawData].map(char => char.charCodeAt(0))
+            );
+        }
+    </script>
+    <script>
+        const notificationBtn = document.getElementById("notification-btn");
+
+        if (notificationBtn) {
+            notificationBtn.addEventListener("click", async () => {
+                try {
+                    if (!("Notification" in window)) {
+                        alert("Notifications are not supported on this device.");
+                        return;
+                    }
+
+                    if (!("serviceWorker" in navigator)) {
+                        alert("Service workers are not supported on this device.");
+                        return;
+                    }
+
+                    const permission = await Notification.requestPermission();
+
+                    if (permission !== "granted") {
+                        alert("Notification permission was not granted.");
+                        return;
+                    }
+
+                    const registration = await navigator.serviceWorker.ready;
+
+                    const publicKey = "BML4081toBRSkNOYv09FnDB9VKlB-UDJwN4rg679nlbF-nZEXzvS0dS3c21xsFXCUWexS4oqfMM_kVbrrlGJhs4";
+
+                    let subscription =
+                        await registration.pushManager.getSubscription();
+
+                    if (!subscription) {
+                        subscription =
+                            await registration.pushManager.subscribe({
+                                userVisibleOnly: true,
+                                applicationServerKey:
+                                    urlBase64ToUint8Array(publicKey)
+                            });
+                    }
+
+                    const response = await fetch("/notifications/subscribe", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(subscription)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Failed to save subscription on server");
+                    }
+
+                    console.log("Push subscription saved:");
+                    console.log(JSON.stringify(subscription));
+
+                    alert("Notifications enabled!");
+                } catch (error) {
+                    console.error("Push subscription failed:", error);
+                    alert("Could not enable push notifications.");
+                }
             });
         }
     </script>
