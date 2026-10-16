@@ -1,4 +1,4 @@
-# keep — Letters Worth Waiting For
+# keepni
 
 **A full-stack Go web application bringing anticipation and intention back to digital communication.**
 
