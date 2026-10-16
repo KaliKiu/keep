@@ -13,12 +13,12 @@ Built with Go and SQLite, the application combines a lightweight backend with a 
 
 ## Features
 
-- **Authentication** — Secure registration, bcrypt password hashing, and session management.
-- **Partner System** — Unique friend codes
-- **Sealed Letters** — Configurable unlock conditions, threaded replies, and read receipts.
-- **Attachments** — Image uploads with partner specific access controls.
-- **Notifications** — Web Push notifications and service worker integration.
-- **Localization** — English, German, and Traditional Chinese.
+- **Authentication**: Secure registration, bcrypt password hashing, and session management.
+- **Partner System**: Unique friend codes
+- **Sealed Letters**: Configurable unlock conditions, threaded replies, and read receipts.
+- **Attachments**: Image uploads with partner specific access controls.
+- **Notifications**: Web Push notifications and service worker integration.
+- **Localization**: English, German, and Traditional Chinese.
 
 ## Technical Highlights
 
